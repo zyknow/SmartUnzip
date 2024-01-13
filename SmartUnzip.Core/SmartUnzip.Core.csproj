@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp" Version="$(ABPPackageVersion)" />
+    <PackageReference Include="SharpCompress" Version="0.35.0" />
+  </ItemGroup>
+
+</Project>

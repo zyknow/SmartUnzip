@@ -1,0 +1,36 @@
+﻿using Shouldly;
+
+namespace SmartUnzip.Core.Tests;
+
+public sealed class ArchiveFinderTests : SmartUnzipCoreTestBase
+{
+    private readonly IArchiveFinder _archiveFinder;
+
+
+
+    public ArchiveFinderTests()
+    {
+        _archiveFinder = GetRequiredService<IArchiveFinder>();
+    }
+
+    [Fact]
+    public async Task FindArchiveAsync_ShouldReturnCorrectArchiveFiles()
+    {
+        // Arrange
+        var expectedFiles = SmartUnzipCoreTestConsts.TestFiles.Select(file => Path.GetFullPath(file)).ToList();
+
+        // Act
+        var result = (await _archiveFinder.FindArchiveAsync(SmartUnzipCoreTestConsts.TestDirectory, true)).ToList();
+
+        // Assert
+        result.ShouldNotBeNull();
+
+        foreach (var archiveFileInfo in result)
+        {
+            foreach (var part in archiveFileInfo.Parts)
+            {
+                expectedFiles.ShouldContain(part);
+            }
+        }
+    }
+}

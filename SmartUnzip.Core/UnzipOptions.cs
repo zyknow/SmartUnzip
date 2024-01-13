@@ -1,0 +1,74 @@
+﻿using SharpCompress.Common;
+using SmartUnzip.Core.Datas;
+using SmartUnzip.Core.Enums;
+
+namespace SmartUnzip.Core;
+
+public class UnzipOptions
+{
+    /// <summary>
+    /// 不保留解压文件结构
+    /// </summary>
+    public bool NoKeepDirectoryStructure { get; set; }
+
+    /// <summary>
+    /// 解压压缩包内的解压文件
+    /// </summary>
+    public bool UnzipInnerArchive { get; set; }
+
+    /// <summary>
+    /// 创建解压文件夹
+    /// </summary>
+    public bool CreateUnzipFolder { get; set; } = true;
+
+    /// <summary>
+    /// 解压包移动路径
+    /// </summary>
+    public string UnzipPackageMovePath { get; set; }
+
+    /// <summary>
+    /// 是否按使用次数排序密码。
+    /// </summary>
+    public bool ChoicePasswordOrderByUseCount { get; set; }
+
+    /// <summary>
+    /// 调试模式
+    /// </summary>
+    public bool DebuggerMode { get; set; }
+
+    /// <summary>
+    /// 并发测试密码
+    /// </summary>
+    public bool ConcurrentTestPassword { get; set; }
+
+    /// <summary>
+    /// 最大解压压缩包并发数
+    /// </summary>
+    public int MaxUnzipArchiveCount { get; set; }
+
+    /// <summary>
+    ///  解压包后处理方式
+    /// </summary>
+    public UnzipPackageAfterHandleType _unzipPackageAfterHandleType { get; set; } =
+        UnzipConsts.DefaultUnzipPackageAfterHandlerType;
+
+    /// <summary>
+    /// 重复文件的处理方式。
+    /// </summary>
+    public DuplicateFileHandleType DuplicateFileHandleType { get; set; } = UnzipConsts.DefaultDuplicateFileHandleType;
+
+    /// <summary>
+    /// 包含的正则表达式列表。解压时，只有符合这些正则表达式的文件才会被解压。
+    /// </summary>
+    public List<string> IncludeRegexs { get; set; } = UnzipConsts.DefaultIncludeRegexs;
+
+    /// <summary>
+    /// 排除的正则表达式列表。解压时，符合这些正则表达式的文件将不会被解压。
+    /// </summary>
+    public List<string> ExcludeRegexs { get; set; } = UnzipConsts.DefaultExcludeRegexs;
+
+    /// <summary>
+    /// 支持的压缩文件类型列表。只有这些类型的压缩文件才会被解压。
+    /// </summary>
+    public List<ArchiveType> SupportArchiveTypes { get; set; } = UnzipConsts.DefaultSupportArchiveTypes;
+}

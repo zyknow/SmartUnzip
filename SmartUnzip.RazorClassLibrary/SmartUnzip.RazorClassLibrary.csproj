@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<RootNamespace>SmartUnzip</RootNamespace>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+		<SupportedPlatform Include="browser" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.0" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.3.0" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.DataGrid.EntityFrameworkAdapter" Version="4.3.0" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji" Version="4.3.0" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.3.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\SmartUnzip.Core\SmartUnzip.Core.csproj" />
+	</ItemGroup>
+
+</Project>

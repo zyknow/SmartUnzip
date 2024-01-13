@@ -1,0 +1,15 @@
+<Project>
+	<PropertyGroup>
+		<LangVersion>latest</LangVersion>
+		<Version>0.0.1-alpha</Version>
+		
+		<!-- 以下配置将禁止显示所有警告 -->
+		<WarningLevel>0</WarningLevel>
+		
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		
+		<!-- All Abp packages -->
+        <ABPPackageVersion>8.0.1</ABPPackageVersion>
+	</PropertyGroup>
+</Project>
