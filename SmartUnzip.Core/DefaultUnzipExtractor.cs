@@ -121,7 +121,7 @@ public class DefaultUnzipExtractor(
                 var archive = archiveProcessor.OpenArchive(partList, opt => { opt.Password = unzipPassword?.Value; });
 
                 archiveFileInfo.Password = unzipPassword?.Value;
-                archiveFileInfo.TestedPassword = true;
+                archiveFileInfo.HasTestedPassword = true;
                 archiveFileInfo.Archive = archive;
 
                 if (unzipPassword == null)
@@ -144,7 +144,7 @@ public class DefaultUnzipExtractor(
             }
         }
 
-        archiveFileInfo.TestedPassword = true;
+        archiveFileInfo.HasTestedPassword = true;
         archiveFileInfo.Exception = ex;
         throw ex;
     }

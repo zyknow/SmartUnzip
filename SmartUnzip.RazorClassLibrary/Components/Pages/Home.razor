@@ -1,55 +1,20 @@
 ﻿@page "/"
+@inherits SmartUnzipComponentBase
 @inject IArchiveFinder ArchiveFinder
 @inject IPasswordRepository PasswordRepository
 @inject IUnzipExtractor UnzipExtractor
 
-<div class="m-4">
+<div class="w-full h-full flex flex-row">
+    <div class="w-1/2 h-full bg-red-100">
+        12322
+        <div class="text-7xl">123</div>
 
-    <FluentCard>
-        <div class="flex flex-col  space-y-8">
-            <h2 class="text-red-500">Hello World!</h2>
-            <FluentButton Appearance="@Appearance.Accent" @onclick="FindArchive">Click Me</FluentButton>
-            <FluentTextField></FluentTextField>
-        </div>
-
-    </FluentCard>
-
+    </div>
+    <div class="w-1/2 h-full bg-blue-100">
+        666
+    </div>
 </div>
 
 @code{
-
-
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-        FindArchive();
-    }
-
-    async Task FindArchive()
-    {
-        PasswordRepository.AddPasswords(new List<UnzipPassword>()
-        {
-            new UnzipPassword("123")
-        });
-
-        var archiveInfos = (await ArchiveFinder.FindArchiveAsync(@$"C:\Users\zy\Desktop\temp\7z")).ToList();
-
-        foreach (var archiveFileInfo in archiveInfos)
-        {
-            UnzipExtractor.TestedOpenArchive(archiveFileInfo);
-        }
-        
-        foreach (var archiveFileInfo in archiveInfos)
-        {
-            archiveFileInfo.ExtractDirectory = $@"C:\Users\zy\Desktop\temp\7z\test";
-        }
-        
-
-        await foreach (var info in UnzipExtractor.ExtractsAsync(archiveInfos))
-        {
-            
-        }
-
-    }
 
 }

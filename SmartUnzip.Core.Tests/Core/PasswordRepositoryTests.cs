@@ -1,6 +1,6 @@
 ﻿using SmartUnzip.Core.Models;
 
-namespace SmartUnzip.Core.Tests;
+namespace SmartUnzip.Core.Tests.Core;
 
 public sealed class PasswordRepositoryTests : SmartUnzipCoreTestBase
 {

@@ -1,10 +1,10 @@
-{
+﻿{
 	"devDependencies": {
 		"@unocss/cli": "^0.58.3",
 		"@unocss/preset-wind": "^0.58.3",
 		"unocss": "^0.58.3"
 	},
-	"scripts": {
-		"watch": "unocss \"**/**/*.razor\" -o \"SmartUnzip.Wpf/wwwroot/css/app.min.css\" -w"
-	}
+  "scripts": {
+    "watch": "unocss \"**/**/*.razor\" -o \"SmartUnzip.Wpf/wwwroot/css/app.min.css\" -w -m --preflights"
+  }
 }

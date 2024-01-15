@@ -1,7 +1,8 @@
 ﻿using Shouldly;
 using SmartUnzip.Core.Models;
+using SmartUnzip.Core.Tests.Consts;
 
-namespace SmartUnzip.Core.Tests;
+namespace SmartUnzip.Core.Tests.Core;
 
 public sealed class ArchiveProcessorTests : SmartUnzipCoreTestBase
 {

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -11,15 +11,21 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.0" />
-		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.3.0" />
-		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.DataGrid.EntityFrameworkAdapter" Version="4.3.0" />
-		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji" Version="4.3.0" />
-		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.3.0" />
+        <PackageReference Include="Volo.Abp.Autofac" Version="$(ABPPackageVersion)" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.0" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.3.1" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.DataGrid.EntityFrameworkAdapter" Version="4.3.1" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji" Version="4.3.1" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.3.1" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\SmartUnzip.Core\SmartUnzip.Core.csproj" />
+	  <ProjectReference Include="..\SmartUnzip.Localization\SmartUnzip.Localization.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="wwwroot\" />
 	</ItemGroup>
 
 </Project>
