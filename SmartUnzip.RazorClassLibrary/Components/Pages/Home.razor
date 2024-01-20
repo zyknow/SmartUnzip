@@ -1,20 +1,176 @@
 ﻿@page "/"
+@using Microsoft.Extensions.Options
+@using Volo.Abp
+@using System.Text.Json
+@using Microsoft.Extensions.Logging
+@using Volo.Abp.IO
 @inherits SmartUnzipComponentBase
-@inject IArchiveFinder ArchiveFinder
-@inject IPasswordRepository PasswordRepository
 @inject IUnzipExtractor UnzipExtractor
-
-<div class="w-full h-full flex flex-row">
-    <div class="w-1/2 h-full bg-red-100">
-        12322
-        <div class="text-7xl">123</div>
-
+@inject IToastService TolToastService
+@inject IOptions<UnzipOptions> DefaultUnzipOptions
+<div class="flex flex-col">
+    <div>
+        <FluentButton @onclick="Reset" Loading="@loadding">重置</FluentButton>
     </div>
-    <div class="w-1/2 h-full bg-blue-100">
-        666
+
+    <div class="grid grid-cols-2 grid-flow-row p-4 space-x-2">
+        <div >
+            <FluentCheckbox @bind-value="options.PreserveFileTime" Label="保存文件时间"></FluentCheckbox>
+            <FluentCheckbox @bind-value="options.PreserveAttributes" Label="保存文件属性"></FluentCheckbox>
+            <FluentCheckbox @bind-value="options.NoKeepDirectoryStructure" Label="不保留解压文件结构"></FluentCheckbox>
+            <FluentCheckbox @bind-value="options.UnzipInnerArchive" Label="解压压缩包内的解压文件"></FluentCheckbox>
+            <FluentCheckbox @bind-value="options.CreateUnzipFolder" Label="创建解压文件夹"></FluentCheckbox>
+            <FluentCheckbox @bind-value="options.ChoicePasswordOrderByUseCount" Label="按使用次数排序密码"></FluentCheckbox>
+            <FluentCheckbox @bind-value="options.DebuggerMode" Label="调试模式"></FluentCheckbox>
+            <FluentNumberField @bind-Value="options.MaxUnzipArchiveCount" Label="最大解压压缩包并发数"></FluentNumberField>
+            <FluentTextField @bind-value="options.UnzipDirectory" Label="统一解压到指定路径"></FluentTextField>
+
+            <FluentSelect TOption="UnzipPackageAfterHandleType"
+                          Items="@(Enum.GetValues(typeof(UnzipPackageAfterHandleType)).Cast<UnzipPackageAfterHandleType>())"
+                          @bind-SelectedOption="@options.UnzipPackageAfterHandleType" Label="解压包后处理方式"/>
+            @if (options.UnzipPackageAfterHandleType == UnzipPackageAfterHandleType.MoveToFolder)
+            {
+                <FluentTextField @bind-value="options.UnzipPackageMovePath" Label="解压包移动路径"></FluentTextField>
+            }
+
+
+            <FluentSelect TOption="DuplicateFileHandleType"
+                          Items="@(Enum.GetValues(typeof(DuplicateFileHandleType)).Cast<DuplicateFileHandleType>())"
+                          @bind-SelectedOption="@options.DuplicateFileHandleType" Label="重复文件的处理方式"/>
+
+        </div>
+        <div class="flex flex-col space-y-2 ">
+            <div class="flex flex-row items-center justify-between space-x-2">
+                <FluentTextField @bind-value="_scanPath" Class="flex-1"></FluentTextField>
+                <FluentButton @onclick="Scan" Loading="@loadding">扫描</FluentButton>
+                <FluentButton @onclick="UnzipArchives" Loading="@loadding">解压</FluentButton>
+            </div>
+            <FluentDivider Class="w-full"></FluentDivider>
+
+
+            <FluentTreeView>
+
+                @foreach (var archiveInfo in _archiveInfos)
+                {
+                    <UnzipTreeItem OnRemoveClick="@(() => RemoveArchiveItem(archiveInfo))" Archive="@archiveInfo"></UnzipTreeItem>
+                }
+                )
+
+            </FluentTreeView>
+
+        </div>
     </div>
+
 </div>
 
-@code{
+
+@code {
+
+    string _scanPath;
+
+    bool loadding;
+
+    UnzipOptions options;
+
+
+    List<ArchiveFileInfo> _archiveInfos = [];
+
+    protected override void OnInitialized()
+    {
+        _scanPath = $@"C:\Users\zy\Desktop\temp\test\TestZips - 副本";
+        options = JsonSerializer.Deserialize<UnzipOptions>(JsonSerializer.Serialize(DefaultUnzipOptions.Value));
+        base.OnInitialized();
+    }
+
+    void RemoveArchiveItem(ArchiveFileInfo archiveInfoViewModel)
+    {
+        _archiveInfos.Remove(archiveInfoViewModel);
+    }
+
+    async void Reset()
+    {
+        DirectoryHelper.DeleteIfExists(_scanPath, true);
+
+        CopyDirectory($@"C:\Users\zy\Desktop\temp\test\TestZips", _scanPath);
+
+        _archiveInfos = [];
+    }
+
+    public static void CopyDirectory(string sourceDir, string destinationDir)
+    {
+        // 创建目标目录
+        DirectoryInfo dir = new DirectoryInfo(sourceDir);
+
+        if (!dir.Exists)
+        {
+            throw new DirectoryNotFoundException($"Source directory does not exist or could not be found: {sourceDir}");
+        }
+
+        DirectoryInfo[] dirs = dir.GetDirectories();
+        Directory.CreateDirectory(destinationDir);
+
+        // 获取文件并拷贝它们
+        foreach (FileInfo file in dir.GetFiles())
+        {
+            string temppath = Path.Combine(destinationDir, file.Name);
+            file.CopyTo(temppath, false);
+        }
+
+        // 如果有子目录, 递归拷贝这些目录
+        foreach (DirectoryInfo subdir in dirs)
+        {
+            string temppath = Path.Combine(destinationDir, subdir.Name);
+            CopyDirectory(subdir.FullName, temppath);
+        }
+    }
+
+    async void Scan()
+    {
+        loadding = true;
+        try
+        {
+            var archives = await UnzipExtractor.FindArchiveAsync(_scanPath, options, true);
+
+            _archiveInfos = archives.ToList();
+        }
+        catch (Exception e)
+        {
+            TolToastService.ShowError(e.Message);
+        }
+        finally
+        {
+            loadding = false;
+        }
+
+
+        StateHasChanged();
+    }
+
+    async void UnzipArchives()
+    {
+        loadding = true;
+
+        foreach (var archive in _archiveInfos)
+        {
+            archive.UnzipDirectory = Path.Combine(Path.GetDirectoryName(archive.FilePath), Path.GetFileNameWithoutExtension(archive.Name));
+
+
+            archive.PropertyChanged += (sender, args) => { InvokeAsync(() => { StateHasChanged(); }); };
+        }
+
+
+        try
+        {
+            await Task.Run(async () => { await UnzipExtractor.ExtractsAsync(_archiveInfos, options); });
+        }
+        catch (Exception e)
+        {
+            TolToastService.ShowError(e.Message);
+        }
+
+        loadding = false;
+        StateHasChanged();
+    }
+
 
 }

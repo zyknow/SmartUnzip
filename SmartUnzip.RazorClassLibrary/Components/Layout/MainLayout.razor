@@ -2,16 +2,30 @@
 @inherits LayoutComponentBase
 @inject IStringLocalizer<SmartUnzipResource> Localizer
 
+
 <div class="w-screen h-screen">
-    <FluentMainLayout NavMenuTitle="Navigation menu" HeaderHeight="0">
-        <Body>
-            <div class="p-4 h-full w-full">
-                @Body
-            </div>
-        </Body>
-        <NavMenuContent>
-            <FluentNavLink Href="/" Text="Home1" Icon="new Icons.Filled.Size12.Home()">@Localizer["Menu:Home"]</FluentNavLink>
-            <FluentNavLink Href="/password-manager" Text="Home1" Icon="new Icons.Filled.Size16.Password()">@Localizer["Menu:PasswordManager"]</FluentNavLink>
-        </NavMenuContent>
-    </FluentMainLayout>
+
+    <div class="w-full h-full">
+        <FluentMainLayout NavMenuTitle="Navigation menu" HeaderHeight="0">
+            <Body>
+                <div class="h-full w-full">
+                    @Body
+                </div>
+            </Body>
+            <NavMenuContent>
+                <FluentNavLink Href="/" Text="Home1" Icon="new Icons.Filled.Size12.Home()">@Localizer["Menu:Home"]</FluentNavLink>
+                <FluentNavLink Href="/password-manager" Text="Home1" Icon="new Icons.Filled.Size16.Password()">@Localizer["Menu:PasswordManager"]</FluentNavLink>
+            </NavMenuContent>
+        </FluentMainLayout>
+    </div>
+
+    <div style="position:absolute">
+
+        <FluentToastProvider />
+        <FluentDialogProvider />
+        <FluentTooltipProvider />
+        <FluentMessageBarProvider />
+    </div>
 </div>
+
+

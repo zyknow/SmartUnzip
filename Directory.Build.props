@@ -10,6 +10,6 @@
 		<Nullable>enable</Nullable>
 		
 		<!-- All Abp packages -->
-        <ABPPackageVersion>8.0.1</ABPPackageVersion>
+        <ABPPackageVersion>8.0.2</ABPPackageVersion>
 	</PropertyGroup>
 </Project>

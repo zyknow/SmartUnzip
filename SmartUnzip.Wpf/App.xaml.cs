@@ -1,10 +1,9 @@
-﻿using System.Diagnostics;
-using System.IO;
-using System.Windows;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
-using SmartUnzip.Unocss;
+using System.Diagnostics;
+using System.IO;
+using System.Windows;
 using Volo.Abp;
 
 namespace SmartUnzip;
@@ -31,6 +30,7 @@ public partial class App : Application
     .Enrich.FromLogContext()
     .WriteTo.Async(c => c.File("Logs/logs.txt"))
     .CreateLogger();
+
 
         try
         {
@@ -114,15 +114,6 @@ public partial class App : Application
                 process.Kill();
             }
         };
-    }
-
-
-    protected override void OnExit(ExitEventArgs e)
-    {
-        var unocss = _abpApplication?.ServiceProvider.GetRequiredService<IUnocssProcessInterop>();
-        unocss?.Dispose();
-
-        base.OnExit(e);
     }
 }
 

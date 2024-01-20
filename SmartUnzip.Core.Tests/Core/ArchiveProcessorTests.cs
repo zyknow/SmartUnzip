@@ -37,10 +37,10 @@ public sealed class ArchiveProcessorTests : SmartUnzipCoreTestBase
         // Act
         var archiveFileInfo = _archiveProcessor.GetArchiveFileInfo(filePath);
         archiveFileInfo.Archive = _archiveProcessor.OpenArchive(archiveFileInfo.Parts);
-        
+
         // Assert
-        var fileFullPath =  Path.GetFullPath(filePath);
-        
+        var fileFullPath = Path.GetFullPath(filePath);
+
         archiveFileInfo.ShouldNotBeNull();
         archiveFileInfo.FilePath.ShouldBe(fileFullPath);
         archiveFileInfo.Parts.Count.ShouldBe(1);
@@ -52,7 +52,7 @@ public sealed class ArchiveProcessorTests : SmartUnzipCoreTestBase
     {
         // Arrange
         var filePath = SmartUnzipCoreTestConsts.TestFiles.First();
-        var parts = new List<string> {filePath};
+        var parts = new List<string> { filePath };
 
         // Act
         var archive = _archiveProcessor.OpenArchive(parts);
@@ -80,7 +80,7 @@ public sealed class ArchiveProcessorTests : SmartUnzipCoreTestBase
         // Assert
         Directory.Exists(extractDirectory).ShouldBeTrue();
         Directory.GetFiles(extractDirectory).ShouldNotBeEmpty();
-        
+
         Directory.Delete(extractDirectory, true);
     }
 }

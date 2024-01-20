@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Serilog" Version="3.1.1" />
     <PackageReference Include="Volo.Abp" Version="$(ABPPackageVersion)" />
     <PackageReference Include="SharpCompress" Version="0.35.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
