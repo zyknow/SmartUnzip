@@ -7,6 +7,6 @@
 	},
   "scripts": {
     "watch": "unocss \"**/**/*app.css\" \"**/**/*.razor\" -o \"SmartUnzip.Wpf/wwwroot/css/app.min.css\" -w -m --preflights",
-    "watch:blazor-server": "unocss \"**/**/*app.css\" \"**/**/*.razor\" -o \"SmartUnzip.Blazor/wwwroot/app.min.css\" -w -m --preflights"
+    "watch:blazor-server": "unocss \"**/**/*app.css\" \"**/**/*.razor\" -o \"SmartUnzip.Blazor/wwwroot/css/app.min.css\" -w -m --preflights"
   }
 }

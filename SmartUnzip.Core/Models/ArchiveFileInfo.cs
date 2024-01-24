@@ -2,13 +2,14 @@
 using SharpCompress.Archives;
 using SmartUnzip.Core.Enums;
 using System.Collections.ObjectModel;
+using SharpCompress.Archives.SevenZip;
 
 namespace SmartUnzip.Core.Models;
 
 /// <summary>
 /// 存档文件信息
 /// </summary>
-public partial class ArchiveFileInfo : ObservableObject, IDisposable
+public partial class ArchiveFileInfo : ObservableObject
 {
     /// <summary>
     /// 如果Parts的数量大于1，表示这是一个多部分的存档
@@ -40,9 +41,6 @@ public partial class ArchiveFileInfo : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _hasTestedPassword;
 
-    [ObservableProperty]
-    private IArchive? _archive;
-
     /// <summary>
     /// 如果在处理文件时发生异常，这个属性会包含异常信息
     /// </summary>
@@ -63,9 +61,4 @@ public partial class ArchiveFileInfo : ObservableObject, IDisposable
 
     [ObservableProperty]
     private ObservableCollection<ArchiveFileInfo> _children = [];
-
-    public void Dispose()
-    {
-        Archive?.Dispose();
-    }
 }

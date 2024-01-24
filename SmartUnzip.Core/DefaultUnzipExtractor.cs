@@ -12,9 +12,10 @@ namespace SmartUnzip.Core;
 
 public class DefaultUnzipExtractor(
     IPasswordRepository passwordRepository,
-    ILogger<DefaultUnzipExtractor> logger, IServiceProvider serviceProvider) : IUnzipExtractor, ISingletonDependency
+    ILogger<DefaultUnzipExtractor> logger,
+    IServiceProvider serviceProvider,
+    IUnzipUniqueCalculator unzipUniqueCalculator) : IUnzipExtractor, ISingletonDependency
 {
-
     /// <summary>
     /// 解压
     /// </summary>
@@ -40,7 +41,6 @@ public class DefaultUnzipExtractor(
         // 等待任务完成并返回结果
         foreach (var task in tasks)
         {
-
             // 使用 await 来等待任务完成
             await task;
 
@@ -98,25 +98,28 @@ public class DefaultUnzipExtractor(
     /// <param name="options"></param>
     /// <param name="recursive"></param>
     /// <returns></returns>
-    public virtual async Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(DirectoryInfo directory, UnzipOptions options,
+    public virtual async Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(DirectoryInfo directory,
+        UnzipOptions options,
         bool recursive = true)
     {
         List<ArchiveFileInfo> infos = [];
 
         var files = directory.GetFiles();
 
+
         if (files.IsNullOrEmpty())
             return [];
 
-        foreach (var fileInfo in files)
+        foreach (var fileInfo in files.Where(f => options.ExcludePaths.All(e => e != f.FullName)))
         {
             // 排除已经处理过的文件
             if (infos.Any(info => info.Parts.Contains(fileInfo.FullName)))
                 continue;
 
+            ArchiveFileInfo? info = null;
             try
             {
-                var info = GetArchiveFileInfo(fileInfo.FullName, options.ExcludeRegexs,
+                info = GetArchiveFileInfo(fileInfo.FullName, options.ExcludeRegexs,
                     options.SupportArchiveTypes);
                 infos.Add(info);
             }
@@ -125,6 +128,8 @@ public class DefaultUnzipExtractor(
                 logger.LogError(e.Message);
             }
         }
+
+        options.ExcludePaths.AddIfNotContains(files.Select(x => x.FullName));
 
         if (!recursive) return infos;
 
@@ -137,7 +142,7 @@ public class DefaultUnzipExtractor(
         return infos;
     }
 
-    protected virtual void OpenArchive(ArchiveFileInfo archiveFileInfo, UnzipOptions options)
+    protected virtual async Task<IArchive?> OpenArchiveAsync(ArchiveFileInfo archiveFileInfo, UnzipOptions options)
     {
         var lostParts = archiveFileInfo.Parts.Where(x => !File.Exists(x)).ToList();
 
@@ -146,38 +151,41 @@ public class DefaultUnzipExtractor(
 
         var passwords = GetPasswords(options.ChoicePasswordOrderByUseCount);
 
-        var partList = archiveFileInfo.Parts.ToList();
-
         Exception? ex = null;
 
+        var readerOptions = new ReaderOptions();
 
         foreach (var unzipPassword in passwords)
         {
             try
             {
-                var archive = OpenArchiveUsePassword(partList, unzipPassword?.Value);
+                readerOptions.Password = unzipPassword?.Value;
 
+                IArchive? archive = OpenArchiveUsePassword(archiveFileInfo.Parts, unzipPassword?.Value);
                 archiveFileInfo.Password = unzipPassword?.Value;
                 archiveFileInfo.HasTestedPassword = true;
-                archiveFileInfo.Archive = archive;
 
-                if (unzipPassword == null)
-                    return;
+                if (unzipPassword != null)
+                {
+                    unzipPassword.IncreaseUseCount();
+                    passwordRepository.UpdatePassword(unzipPassword);
+                }
 
-                unzipPassword.IncreaseUseCount();
-                passwordRepository.UpdatePassword(unzipPassword);
-
-                return;
+                return archive;
             }
             catch (CryptographicException e)
             {
-                logger.LogError(e, "密码错误。");
+                // logger.LogError(e, "密码错误。");
+
                 ex = new UserFriendlyException(@$"测试 {unzipPassword?.Value} 不正确");
+                // archive?.Dispose();
             }
             catch (Exception e)
             {
                 ex = e;
-                logger.LogError(e, "测试打开压缩文件异常。");
+                // archive?.Dispose();
+
+                // logger.LogError(e, "测试打开压缩文件异常。");
             }
         }
 
@@ -191,20 +199,14 @@ public class DefaultUnzipExtractor(
         UnzipOptions options)
     {
         await semaphore.WaitAsync();
-
         try
         {
-
-            if (info.Archive is null)
-                OpenArchive(info, options);
-
             info.Children = new ObservableCollection<ArchiveFileInfo>(await ExtractAsync(info, options));
 
             foreach (ArchiveFileInfo childArchiveFileInfo in info.Children)
             {
                 await ExtractsAsync(childArchiveFileInfo, semaphore, options);
             }
-
         }
         catch (Exception e)
         {
@@ -213,41 +215,27 @@ public class DefaultUnzipExtractor(
         }
         finally
         {
-            info.Archive?.Dispose();
             semaphore.Release();
         }
     }
 
-    protected virtual async Task<IEnumerable<ArchiveFileInfo>> ExtractAsync(ArchiveFileInfo archiveFileInfo, UnzipOptions options)
+    protected virtual async Task<IEnumerable<ArchiveFileInfo>> ExtractAsync(ArchiveFileInfo archiveFileInfo,
+        UnzipOptions options)
     {
         if (archiveFileInfo is null)
             throw new ArgumentNullException(nameof(archiveFileInfo));
 
-        var archive = archiveFileInfo.Archive;
+        var archive = await OpenArchiveAsync(archiveFileInfo, options);
 
-        if (archive is null)
-        {
-            OpenArchive(archiveFileInfo, options);
-            //throw new UserFriendlyException("未打开压缩文件");
-        }
-
-        if (!options.UnzipDirectory.IsNullOrEmpty() && archiveFileInfo.UnzipDirectory.IsNullOrEmpty())
-            archiveFileInfo.UnzipDirectory = options.UnzipDirectory;
-
-        if (archiveFileInfo.UnzipDirectory.IsNullOrEmpty())
-        {
-            archiveFileInfo.UnzipDirectory = Path.Combine(Path.GetDirectoryName(archiveFileInfo.FilePath),
-                               Path.GetFileNameWithoutExtension(archiveFileInfo.FilePath));
-        }
-
+        SetUnzipDirectory(archiveFileInfo, options);
 
         ArgumentNullException.ThrowIfNull(archive);
 
         if (archive.Entries.Any() != true)
             throw new UserFriendlyException("压缩文件中没有任何文件");
 
-        if (options.CreateUnzipFolder)
-            DirectoryHelper.CreateIfNotExists(archiveFileInfo.UnzipDirectory);
+        // if (options.CreateUnzipFolder)
+        DirectoryHelper.CreateIfNotExists(archiveFileInfo.UnzipDirectory);
 
 
         var extractionOptions = new ExtractionOptions
@@ -262,35 +250,77 @@ public class DefaultUnzipExtractor(
         var zipFileCount = archive.Entries.Count(x => !x.IsDirectory);
         var currentUnzipFileCount = 0;
 
+
+        // archive.WriteToDirectory(archiveFileInfo.UnzipDirectory, extractionOptions);
+
         foreach (var archiveEntry in archive.Entries)
         {
             if (archiveEntry.IsDirectory) continue;
 
-            archiveEntry.WriteToDirectory(archiveFileInfo.UnzipDirectory, extractionOptions);
+            try
+            {
+                var unzipFilePath = Path.Combine(archiveFileInfo.UnzipDirectory, archiveEntry.Key);
+                if (options.DuplicateFileHandleType == DuplicateFileHandleType.Rename)
+                    unzipFilePath = unzipUniqueCalculator.GetUniqueFileName(unzipFilePath, options);
+
+                archiveEntry.WriteToFile(unzipFilePath, extractionOptions);
+            }
+            catch (NotImplementedException e)
+            {
+                Console.WriteLine(e);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
 
             currentUnzipFileCount++;
-            archiveFileInfo.ExtractProgress = (float)currentUnzipFileCount / zipFileCount;
+            archiveFileInfo.ExtractProgress = (float) currentUnzipFileCount / zipFileCount;
         }
 
         // handler zip files
+        archive?.Dispose();
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+
         UnzippedHandlerParts(archiveFileInfo, options);
 
         archiveFileInfo.ExtractProgress = 1;
 
 
         // scan inner zip files
-        return options.UnzipInnerArchive ? await FindArchiveAsync(archiveFileInfo.UnzipDirectory, options, true) : [];
+        return options.UnzipInnerArchive ? await FindArchiveAsync(archiveFileInfo.UnzipDirectory, options) : [];
+    }
+
+    protected virtual void SetUnzipDirectory(ArchiveFileInfo archiveFileInfo, UnzipOptions options)
+    {
+        if (!archiveFileInfo.UnzipDirectory.IsNullOrEmpty())
+            return;
+
+        if (!options.UnzipDirectory.IsNullOrEmpty())
+        {
+            archiveFileInfo.UnzipDirectory = options.UnzipDirectory;
+        }
+        else
+        {
+            archiveFileInfo.UnzipDirectory = Path.Combine(Path.GetDirectoryName(archiveFileInfo.FilePath),
+                Path.GetFileNameWithoutExtension(archiveFileInfo.FilePath));
+        }
+
+        if (options.NoKeepDirectoryStructure)
+        {
+            archiveFileInfo.UnzipDirectory = Path.GetDirectoryName(archiveFileInfo.UnzipDirectory);
+        }
     }
 
     protected virtual void UnzippedHandlerParts(ArchiveFileInfo archiveFileInfo, UnzipOptions options)
     {
-        archiveFileInfo.Archive?.Dispose();
-
         // 最新的 switch 语法处理 unzipPackageAfterHandleType
         switch (options.UnzipPackageAfterHandleType)
         {
             case UnzipPackageAfterHandleType.Delete:
                 foreach (var part in archiveFileInfo.Parts)
+                {
                     try
                     {
                         FileHelper.DeleteIfExists(part);
@@ -299,6 +329,9 @@ public class DefaultUnzipExtractor(
                     {
                         logger.LogError(e, e.Message);
                     }
+                }
+
+
                 break;
             case UnzipPackageAfterHandleType.MoveToFolder:
 
@@ -312,7 +345,6 @@ public class DefaultUnzipExtractor(
             case UnzipPackageAfterHandleType.None:
                 break;
         }
-
     }
 
     /// <summary>
@@ -340,7 +372,7 @@ public class DefaultUnzipExtractor(
         }
 
         var isArchive = ArchiveFactory.IsArchive(filePath, out var type);
-        if (!isArchive) throw new UserFriendlyException("不是压缩文件");
+        if (!isArchive) throw new UserFriendlyException(@$"不是压缩文件 :{filePath}");
 
         if (type == null)
             throw new UserFriendlyException("未知的压缩文件类型");
@@ -355,13 +387,13 @@ public class DefaultUnzipExtractor(
     /// <param name="archiveFileInfo"></param>
     /// <param name="password"></param>
     /// <exception cref="ArgumentNullException"></exception>
-    protected virtual IArchive OpenArchiveUsePassword(IEnumerable<string> parts, string? password = null)
+    protected virtual IArchive OpenArchiveUsePassword(List<string> filePaths, string? password = null)
     {
-        var partList = parts.ToList();
-        if (partList.IsNullOrEmpty())
-            throw new ArgumentException("值不可为空", nameof(parts));
+        if (filePaths.IsNullOrEmpty())
+            throw new ArgumentException("值不可为空", nameof(filePaths));
 
-        var files = partList.Select(x => new FileInfo(x));
+        var files = filePaths.Select(x => new FileInfo(x)).ToList();
+
 
         var readerOptions = new ReaderOptions();
         readerOptions.Password = password;
@@ -381,6 +413,4 @@ public class DefaultUnzipExtractor(
 
         return passwords;
     }
-
-
 }

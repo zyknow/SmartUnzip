@@ -7,7 +7,6 @@ namespace SmartUnzip.Core;
 
 public class UnzipOptions
 {
-
     /// <summary>
     /// 保存文件时间
     /// </summary>
@@ -32,8 +31,7 @@ public class UnzipOptions
     /// <summary>
     /// 创建解压文件夹
     /// </summary>
-    public bool CreateUnzipFolder { get; set; } = true;
-
+    // public bool CreateUnzipFolder { get; set; } = true;
 
 
     /// <summary>
@@ -91,4 +89,11 @@ public class UnzipOptions
     /// 支持的压缩文件类型列表。只有这些类型的压缩文件才会被解压。
     /// </summary>
     public List<ArchiveType> SupportArchiveTypes { get; set; } = UnzipConsts.DefaultSupportArchiveTypes;
+
+    internal HashSet<string> ExcludePaths { get; set; } = [];
+
+    public void ResetExcludePaths()
+    {
+        ExcludePaths = [];
+    }
 }

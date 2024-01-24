@@ -19,7 +19,7 @@
             <FluentCheckbox @bind-value="options.PreserveAttributes" Label="保存文件属性"></FluentCheckbox>
             <FluentCheckbox @bind-value="options.NoKeepDirectoryStructure" Label="不保留解压文件结构"></FluentCheckbox>
             <FluentCheckbox @bind-value="options.UnzipInnerArchive" Label="解压压缩包内的解压文件"></FluentCheckbox>
-            <FluentCheckbox @bind-value="options.CreateUnzipFolder" Label="创建解压文件夹"></FluentCheckbox>
+            @* <FluentCheckbox @bind-value="options.CreateUnzipFolder" Label="创建解压文件夹"></FluentCheckbox> *@
             <FluentCheckbox @bind-value="options.ChoicePasswordOrderByUseCount" Label="按使用次数排序密码"></FluentCheckbox>
             <FluentCheckbox @bind-value="options.DebuggerMode" Label="调试模式"></FluentCheckbox>
             <FluentNumberField @bind-Value="options.MaxUnzipArchiveCount" Label="最大解压压缩包并发数"></FluentNumberField>
@@ -75,9 +75,16 @@
 
     List<ArchiveFileInfo> _archiveInfos = [];
 
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
     protected override void OnInitialized()
     {
-        _scanPath = $@"C:\Users\zy\Desktop\temp\test\TestZips - 副本";
+        // _scanPath = $@"C:\Users\zy\Desktop\temp\test\TestZips - 副本";
+        _scanPath = $@"C:\Users\zy\Desktop\temp\test\TestZips - 副本\Parts-Password";
         options = JsonSerializer.Deserialize<UnzipOptions>(JsonSerializer.Serialize(DefaultUnzipOptions.Value));
         base.OnInitialized();
     }
@@ -89,11 +96,11 @@
 
     async void Reset()
     {
-        DirectoryHelper.DeleteIfExists(_scanPath, true);
-
-        CopyDirectory($@"C:\Users\zy\Desktop\temp\test\TestZips", _scanPath);
-
+        var path = @$"C:\Users\zy\Desktop\temp\test\TestZips - 副本";
+        DirectoryHelper.DeleteIfExists(path, true);
+        CopyDirectory($@"C:\Users\zy\Desktop\temp\test\TestZips", path);
         _archiveInfos = [];
+        options.ResetExcludePaths();
     }
 
     public static void CopyDirectory(string sourceDir, string destinationDir)
@@ -152,9 +159,6 @@
 
         foreach (var archive in _archiveInfos)
         {
-            archive.UnzipDirectory = Path.Combine(Path.GetDirectoryName(archive.FilePath), Path.GetFileNameWithoutExtension(archive.Name));
-
-
             archive.PropertyChanged += (sender, args) => { InvokeAsync(() => { StateHasChanged(); }); };
         }
 

@@ -1,21 +1,24 @@
-﻿using Serilog;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
 using Serilog.Events;
 using SmartUnzip.Blazor;
-using SmartUnzip.Blazor.Components;
-using Volo.Abp;
+using System;
+using System.Threading.Tasks;
 
 //var builder = WebApplication.CreateBuilder(args);
 
 //// Add services to the container.
-//builder.Services.AddRazorComponents()
-//  .AddInteractiveServerComponents();
+//builder.Services.AddRazorPages();
+//builder.Services.AddServerSideBlazor();
 
 //var app = builder.Build();
 
 //// Configure the HTTP request pipeline.
 //if (!app.Environment.IsDevelopment())
 //{
-//    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+//    app.UseExceptionHandler("/Error");
 //    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 //    app.UseHsts();
 //}
@@ -23,12 +26,14 @@ using Volo.Abp;
 //app.UseHttpsRedirection();
 
 //app.UseStaticFiles();
-//app.UseAntiforgery();
 
-//app.MapRazorComponents<App>()
-//    .AddInteractiveServerRenderMode();
+//app.UseRouting();
+
+//app.MapBlazorHub();
+//app.MapFallbackToPage("/_Host");
 
 //app.Run();
+
 
 
 Log.Logger = new LoggerConfiguration()
@@ -48,8 +53,7 @@ try
 {
     Log.Information("Starting web host.");
     var builder = WebApplication.CreateBuilder(args);
-    builder.Host
-        .AddAppSettingsSecretsJson()
+    builder.Host.AddAppSettingsSecretsJson()
         .UseAutofac()
         .UseSerilog();
     await builder.AddApplicationAsync<SmartUnzipBlazorModule>();
