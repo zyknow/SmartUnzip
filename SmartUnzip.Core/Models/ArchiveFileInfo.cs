@@ -1,8 +1,8 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using SharpCompress.Archives;
-using SmartUnzip.Core.Enums;
+﻿using System;
+using System.Collections.Generic;
+using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
-using SharpCompress.Archives.SevenZip;
+using System.IO;
 
 namespace SmartUnzip.Core.Models;
 
@@ -61,4 +61,14 @@ public partial class ArchiveFileInfo : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<ArchiveFileInfo> _children = [];
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is ArchiveFileInfo archiveFileInfo)
+        {
+            return archiveFileInfo.FilePath == FilePath;
+        }
+
+        return false;
+    }
 }

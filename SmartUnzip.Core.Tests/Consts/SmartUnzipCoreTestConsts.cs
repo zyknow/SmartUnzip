@@ -1,4 +1,6 @@
-﻿namespace SmartUnzip.Core.Tests.Consts;
+﻿using System.Collections.Generic;
+
+namespace SmartUnzip.Core.Tests.Consts;
 
 public class SmartUnzipCoreTestConsts
 {

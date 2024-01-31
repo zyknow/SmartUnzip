@@ -1,4 +1,6 @@
-﻿namespace SmartUnzip.Core;
+﻿using System.Collections.Generic;
+
+namespace SmartUnzip.Core;
 
 public interface IPasswordRepository
 {

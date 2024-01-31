@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SmartUnzip.Core\SmartUnzip.Core.csproj" />
-    <ProjectReference Include="..\SmartUnzip.TestBase\SmartUnzip.TestBase.csproj" />
   </ItemGroup>
 
   <ItemGroup>

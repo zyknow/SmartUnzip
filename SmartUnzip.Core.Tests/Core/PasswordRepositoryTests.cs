@@ -1,4 +1,5 @@
-﻿using SmartUnzip.Core.Models;
+﻿using System.Collections.Generic;
+using SmartUnzip.Core.Models;
 
 namespace SmartUnzip.Core.Tests.Core;
 

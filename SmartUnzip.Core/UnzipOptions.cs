@@ -1,7 +1,7 @@
-﻿using SharpCompress.Common;
+﻿using System.Collections.Generic;
+using SharpCompress.Common;
 using SmartUnzip.Core.Datas;
 using SmartUnzip.Core.Enums;
-using System.ComponentModel;
 
 namespace SmartUnzip.Core;
 

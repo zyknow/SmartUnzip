@@ -1,6 +1,8 @@
-﻿namespace SmartUnzip.Core;
+﻿using System.IO;
 
-public class DefaultUnzipUniqueCalculator : IUnzipUniqueCalculator, ITransientDependency
+namespace SmartUnzip.Core;
+
+public class DefaultUnzipUniqueCalculator : IUnzipUniqueCalculator
 {
     public string GetUniqueFileName(string unzipFilePath, UnzipOptions options)
     {

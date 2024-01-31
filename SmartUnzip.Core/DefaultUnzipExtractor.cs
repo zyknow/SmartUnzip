@@ -1,12 +1,18 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Bing.Extensions;
+using Bing.IO;
+using Microsoft.Extensions.Logging;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 using SmartUnzip.Core.Enums;
-using SmartUnzip.Core.Models;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
-using Volo.Abp.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SmartUnzip.Core;
 
@@ -14,7 +20,7 @@ public class DefaultUnzipExtractor(
     IPasswordRepository passwordRepository,
     ILogger<DefaultUnzipExtractor> logger,
     IServiceProvider serviceProvider,
-    IUnzipUniqueCalculator unzipUniqueCalculator) : IUnzipExtractor, ISingletonDependency
+    IUnzipUniqueCalculator unzipUniqueCalculator) : IUnzipExtractor
 {
     /// <summary>
     /// 解压
@@ -25,7 +31,7 @@ public class DefaultUnzipExtractor(
     /// <exception cref="ArgumentNullException"></exception>
     public virtual async Task ExtractsAsync(List<ArchiveFileInfo> archiveFileInfo, UnzipOptions options)
     {
-        if (archiveFileInfo.IsNullOrEmpty())
+        if (archiveFileInfo.IsEmpty())
             throw new ArgumentNullException(nameof(archiveFileInfo));
 
         var maxUnzipArchiveCount = options.MaxUnzipArchiveCount;
@@ -70,7 +76,7 @@ public class DefaultUnzipExtractor(
         var parts = ArchiveFactory.GetFileParts(filePath).ToList();
 
         if (parts.IsNullOrEmpty())
-            throw new UserFriendlyException("未找到压缩文件的所有分卷或本体");
+            throw new Exception("未找到压缩文件的所有分卷或本体");
 
         var archiveFileInfo = new ArchiveFileInfo
         {
@@ -102,10 +108,44 @@ public class DefaultUnzipExtractor(
         UnzipOptions options,
         bool recursive = true)
     {
+        var files = directory.GetFiles().ToList();
+
+
+        if (files.IsNullOrEmpty())
+            return [];
+
+        var infos = (await FindArchiveAsync(files, options, recursive)).ToList();
+
+        if (!recursive) return infos;
+
+        var subDirectories = directory.GetDirectories();
+        foreach (var subDirectory in subDirectories)
+        {
+            infos.AddRange(await FindArchiveAsync(subDirectory, options, true));
+        }
+
+        return infos;
+    }
+
+    public virtual async Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(List<DirectoryInfo> directories,
+        UnzipOptions options,
+        bool recursive = true)
+    {
         List<ArchiveFileInfo> infos = [];
 
-        var files = directory.GetFiles();
+        foreach (DirectoryInfo directoryInfo in directories)
+        {
+            infos.AddIfNotContains(await FindArchiveAsync(directoryInfo, options, recursive));
+        }
 
+        return infos;
+    }
+
+    public virtual async Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(List<FileInfo> files,
+        UnzipOptions options,
+        bool recursive = true)
+    {
+        List<ArchiveFileInfo> infos = [];
 
         if (files.IsNullOrEmpty())
             return [];
@@ -132,13 +172,6 @@ public class DefaultUnzipExtractor(
         options.ExcludePaths.AddIfNotContains(files.Select(x => x.FullName));
 
         if (!recursive) return infos;
-
-        var subDirectories = directory.GetDirectories();
-        foreach (var subDirectory in subDirectories)
-        {
-            infos.AddRange(await FindArchiveAsync(subDirectory, options, true));
-        }
-
         return infos;
     }
 
@@ -177,7 +210,7 @@ public class DefaultUnzipExtractor(
             {
                 // logger.LogError(e, "密码错误。");
 
-                ex = new UserFriendlyException(@$"测试 {unzipPassword?.Value} 不正确");
+                ex = new Exception(@$"测试 {unzipPassword?.Value} 不正确");
                 // archive?.Dispose();
             }
             catch (Exception e)
@@ -232,7 +265,7 @@ public class DefaultUnzipExtractor(
         ArgumentNullException.ThrowIfNull(archive);
 
         if (archive.Entries.Any() != true)
-            throw new UserFriendlyException("压缩文件中没有任何文件");
+            throw new Exception("压缩文件中没有任何文件");
 
         // if (options.CreateUnzipFolder)
         DirectoryHelper.CreateIfNotExists(archiveFileInfo.UnzipDirectory);
@@ -294,10 +327,10 @@ public class DefaultUnzipExtractor(
 
     protected virtual void SetUnzipDirectory(ArchiveFileInfo archiveFileInfo, UnzipOptions options)
     {
-        if (!archiveFileInfo.UnzipDirectory.IsNullOrEmpty())
+        if (!archiveFileInfo.UnzipDirectory.IsEmpty())
             return;
 
-        if (!options.UnzipDirectory.IsNullOrEmpty())
+        if (!options.UnzipDirectory.IsEmpty())
         {
             archiveFileInfo.UnzipDirectory = options.UnzipDirectory;
         }
@@ -323,7 +356,7 @@ public class DefaultUnzipExtractor(
                 {
                     try
                     {
-                        FileHelper.DeleteIfExists(part);
+                        FileHelper.Delete(part);
                     }
                     catch (Exception e)
                     {
@@ -367,18 +400,18 @@ public class DefaultUnzipExtractor(
             foreach (var excludeRegex in excludeRegexs)
             {
                 if (Regex.IsMatch(fileName, excludeRegex))
-                    throw new UserFriendlyException("文件名称被排除");
+                    throw new Exception("文件名称被排除");
             }
         }
 
         var isArchive = ArchiveFactory.IsArchive(filePath, out var type);
-        if (!isArchive) throw new UserFriendlyException(@$"不是压缩文件 :{filePath}");
+        if (!isArchive) throw new Exception(@$"不是压缩文件 :{filePath}");
 
         if (type == null)
-            throw new UserFriendlyException("未知的压缩文件类型");
+            throw new Exception("未知的压缩文件类型");
 
         if (!supportArchiveTypes.IsNullOrEmpty() && !supportArchiveTypes.Contains(type.Value))
-            throw new UserFriendlyException("不支持的压缩文件类型");
+            throw new Exception("不支持的压缩文件类型");
     }
 
     /// <summary>

@@ -1,6 +1,10 @@
-﻿namespace SmartUnzip.Core;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Bing.Extensions;
 
-public class DefaultPasswordRepository : IPasswordRepository, ISingletonDependency
+namespace SmartUnzip.Core;
+
+public class DefaultPasswordRepository : IPasswordRepository
 {
     private readonly HashSet<UnzipPassword> passwords = [];
     private readonly object @lock = new();
@@ -25,6 +29,8 @@ public class DefaultPasswordRepository : IPasswordRepository, ISingletonDependen
     {
         lock (@lock)
         {
+            if (password.Value.IsEmpty() || passwords.Any(x => x.Value == password.Value))
+                return;
             passwords.Add(password);
         }
     }
@@ -78,7 +84,7 @@ public class DefaultPasswordRepository : IPasswordRepository, ISingletonDependen
     {
         lock (@lock)
         {
-            passwords.Remove(password);
+            passwords.RemoveAll(x => x.Value == password.Value);
         }
     }
 

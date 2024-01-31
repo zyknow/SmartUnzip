@@ -1,4 +1,5 @@
-﻿using SharpCompress.Common;
+﻿using System.Collections.Generic;
+using SharpCompress.Common;
 using SmartUnzip.Core.Enums;
 
 namespace SmartUnzip.Core.Datas;

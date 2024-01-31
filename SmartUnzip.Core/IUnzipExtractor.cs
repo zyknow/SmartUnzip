@@ -1,4 +1,8 @@
-﻿using SharpCompress.Common;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using SharpCompress.Common;
 
 namespace SmartUnzip.Core;
 
@@ -40,5 +44,13 @@ public interface IUnzipExtractor
     /// <param name="recursive"></param>
     /// <returns></returns>
     Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(DirectoryInfo directory, UnzipOptions options,
+        bool recursive = true);
+
+    Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(List<FileInfo> files,
+        UnzipOptions options,
+        bool recursive = true);
+
+    Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(List<DirectoryInfo> directories,
+        UnzipOptions options,
         bool recursive = true);
 }
