@@ -22,10 +22,9 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid ColumnDefinitions="*, Auto, *"   >
+    <Grid ColumnDefinitions="*, Auto, *">
 
         <StackPanel Spacing="4">
-
             <WrapPanel Orientation="Horizontal">
                 <CheckBox IsChecked="{Binding Options.PreserveFileTime}">保存文件时间</CheckBox>
                 <CheckBox IsChecked="{Binding Options.PreserveAttributes}">保存Windows文件属性</CheckBox>
@@ -65,24 +64,34 @@
 
         <GridSplitter Grid.Column="1" ShowsPreview="True" />
 
-        
-        <Grid RowDefinitions="Auto,*" Grid.Column="2" HorizontalAlignment="Stretch" DragDrop.AllowDrop="True" x:Name="GridDragDrop">
-           <StackPanel Grid.Row="0">
-               <Button IsEnabled="{Binding CanUnzip}">解压</Button>
-           </StackPanel >
-            <TreeView Focusable="False"  Grid.Row="1" Margin="10"
-                      
-                      ItemsSource="{Binding ArchiveFileInfos}" 
+
+        <Grid RowDefinitions="Auto,*" Grid.Column="2" HorizontalAlignment="Stretch" DragDrop.AllowDrop="True"
+              x:Name="GridDragDrop">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="15">
+                <Button Command="{Binding ResetCommand}">重置</Button>
+                <Button IsEnabled="{Binding CanUnzip}" Command="{Binding UnzipCommand}">解压</Button>
+            </StackPanel>
+            <TreeView Focusable="False" Grid.Row="1" Margin="10"
+
+                      ItemsSource="{Binding ArchiveFileInfos}"
                       SelectionMode="Multiple">
                 <TreeView.ItemTemplate>
                     <TreeDataTemplate ItemsSource="{Binding Children}">
                         <Border HorizontalAlignment="Left"
                                 BorderBrush="Gray" BorderThickness="1"
                                 CornerRadius="5" Padding="15 3">
-                            <TextBlock Text="{Binding Name}" />
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}">
+                                    123
+                                </TextBlock>
+                                <ProgressBar  Value="{Binding ExtractProgress}"></ProgressBar>
+                            </StackPanel>
+
                         </Border>
                     </TreeDataTemplate>
+
                 </TreeView.ItemTemplate>
+                <TreeViewItem>123</TreeViewItem>
             </TreeView>
         </Grid>
 

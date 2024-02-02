@@ -5,7 +5,6 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using SmartUnzip.Avalonia.ViewModels;
-using SmartUnzip.Avalonia.Views;
 using SmartUnzip.Core;
 
 namespace SmartUnzip.Avalonia;

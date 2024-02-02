@@ -26,36 +26,13 @@ public partial class HomeView : UserControl
 
     private async Task Grid_Drop(object sender, DragEventArgs e)
     {
-        var unzipExtractor = App.ServiceProvider.GetRequiredService<IUnzipExtractor>();
-
-
         if (e.Data.Contains(DataFormats.Files))
         {
             var filePaths = e.Data.GetFileNames();
+            await vm.OnDrop(filePaths);
 
-            List<FileInfo> files = [];
-            List<DirectoryInfo> directories = [];
-
-            foreach (var path in filePaths)
-            {
-                if (File.Exists(path))
-                    files.Add(new FileInfo(path));
-                else if (Directory.Exists(path))
-                    directories.Add(new DirectoryInfo(path));
-            }
-
-            if (!files.IsEmpty())
-            {
-                var archiveFileInfos = await unzipExtractor.FindArchiveAsync(files, vm.Options);
-                vm.ArchiveFileInfos.AddIfNotContains(archiveFileInfos);
-            }
-            
-            if (!directories.IsEmpty())
-            {
-                var archiveFileInfos = await unzipExtractor.FindArchiveAsync(directories, vm.Options);
-                vm.ArchiveFileInfos.AddIfNotContains(archiveFileInfos);
-            }
         }
+
     }
 
 

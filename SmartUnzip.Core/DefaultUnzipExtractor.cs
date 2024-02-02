@@ -171,7 +171,6 @@ public class DefaultUnzipExtractor(
 
         options.ExcludePaths.AddIfNotContains(files.Select(x => x.FullName));
 
-        if (!recursive) return infos;
         return infos;
     }
 
