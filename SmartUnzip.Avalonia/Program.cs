@@ -1,5 +1,8 @@
 ﻿using Avalonia;
 using System;
+using Projektanker.Icons.Avalonia;
+using Projektanker.Icons.Avalonia.FontAwesome;
+using Projektanker.Icons.Avalonia.MaterialDesign;
 using Serilog;
 
 namespace SmartUnzip.Avalonia;
@@ -37,6 +40,10 @@ class Program
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
     {
+        IconProvider.Current
+            .Register<FontAwesomeIconProvider>()
+            .Register<MaterialDesignIconProvider>();
+        
         var app = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()

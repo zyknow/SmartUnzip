@@ -4,7 +4,7 @@ namespace SmartUnzip.Core;
 
 public class DefaultUnzipUniqueCalculator : IUnzipUniqueCalculator
 {
-    public string GetUniqueFileName(string unzipFilePath, UnzipOptions options)
+    public string GetUniqueFileName(string unzipFilePath, IUnzipOptions options)
     {
         var fileName = Path.GetFileNameWithoutExtension(unzipFilePath);
         var extension = Path.GetExtension(unzipFilePath);

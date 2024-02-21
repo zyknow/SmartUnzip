@@ -26,7 +26,11 @@ public partial class App : Application
         services.AddLogging(loggingBuilder =>
             loggingBuilder.AddSerilog(dispose: true));
 
-        services.AddSmartUnzipServices();
+        services.AddSmartUnzipServices(opt =>
+        {
+            opt.ArchiveFileInfoDefineType = typeof(ArchiveFileInfo);
+            opt.UnzipPasswordDefineType = typeof(UnzipPassword);
+        });
 
         ServiceProvider = services.BuildServiceProvider();
     }

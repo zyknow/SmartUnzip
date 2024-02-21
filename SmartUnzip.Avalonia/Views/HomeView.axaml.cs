@@ -1,12 +1,7 @@
-﻿using System;
-using System.IO;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Input;
-using Bing.Collections;
-using Bing.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using SmartUnzip.Avalonia.ViewModels;
-using SmartUnzip.Core;
 
 namespace SmartUnzip.Avalonia.Views;
 
@@ -32,12 +27,5 @@ public partial class HomeView : UserControl
             await vm.OnDrop(filePaths);
 
         }
-
-    }
-
-
-    private void SelectingItemsControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        vm.StateChanged();
     }
 }

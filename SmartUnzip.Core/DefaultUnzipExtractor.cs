@@ -13,6 +13,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Bing.Collections;
+using Microsoft.Extensions.Options;
 
 namespace SmartUnzip.Core;
 
@@ -20,6 +22,7 @@ public class DefaultUnzipExtractor(
     IPasswordRepository passwordRepository,
     ILogger<DefaultUnzipExtractor> logger,
     IServiceProvider serviceProvider,
+    IOptions<SmartUnzipOptions> smartUnzipOptions,
     IUnzipUniqueCalculator unzipUniqueCalculator) : IUnzipExtractor
 {
     /// <summary>
@@ -29,7 +32,7 @@ public class DefaultUnzipExtractor(
     /// <param name="options"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public virtual async Task ExtractsAsync(List<ArchiveFileInfo> archiveFileInfo, UnzipOptions options)
+    public virtual async Task ExtractsAsync(IEnumerable<IArchiveFileInfo> archiveFileInfo, IUnzipOptions options)
     {
         if (archiveFileInfo.IsEmpty())
             throw new ArgumentNullException(nameof(archiveFileInfo));
@@ -65,11 +68,10 @@ public class DefaultUnzipExtractor(
     /// <summary>
     /// 获取压缩文件信息
     /// </summary>
-    /// <param name="filePath"></param>
-    /// <exception cref="UserFriendlyException"></exception>
     /// <returns></returns>
-    public virtual ArchiveFileInfo GetArchiveFileInfo(string filePath, List<string>? excludeRegexs = null,
-        List<ArchiveType>? supportArchiveTypes = null)
+    public virtual IArchiveFileInfo GetArchiveFileInfo(string filePath,
+        IEnumerable<string>? excludeRegexs = null,
+        IEnumerable<ArchiveType>? supportArchiveTypes = null)
     {
         CheckMatchArchiveFile(filePath);
 
@@ -78,11 +80,11 @@ public class DefaultUnzipExtractor(
         if (parts.IsNullOrEmpty())
             throw new Exception("未找到压缩文件的所有分卷或本体");
 
-        var archiveFileInfo = new ArchiveFileInfo
-        {
-            FilePath = parts.FirstOrDefault(),
-            Parts = parts
-        };
+        var archiveFileInfo = Activator.CreateInstance(smartUnzipOptions.Value.ArchiveFileInfoDefineType) as IArchiveFileInfo;
+
+        archiveFileInfo.FilePath = parts.FirstOrDefault();
+        archiveFileInfo.Parts = parts;
+
 
         return archiveFileInfo;
     }
@@ -94,7 +96,7 @@ public class DefaultUnzipExtractor(
     /// <param name="options"></param>
     /// <param name="recursive"></param>
     /// <returns></returns>
-    public virtual Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(string directory, UnzipOptions options,
+    public virtual Task<IEnumerable<IArchiveFileInfo>> FindArchiveAsync(string directory, IUnzipOptions options,
         bool recursive = true) => FindArchiveAsync(new DirectoryInfo(directory), options, recursive);
 
     /// <summary>
@@ -104,8 +106,8 @@ public class DefaultUnzipExtractor(
     /// <param name="options"></param>
     /// <param name="recursive"></param>
     /// <returns></returns>
-    public virtual async Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(DirectoryInfo directory,
-        UnzipOptions options,
+    public virtual async Task<IEnumerable<IArchiveFileInfo>> FindArchiveAsync(DirectoryInfo directory,
+        IUnzipOptions options,
         bool recursive = true)
     {
         var files = directory.GetFiles().ToList();
@@ -127,11 +129,11 @@ public class DefaultUnzipExtractor(
         return infos;
     }
 
-    public virtual async Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(List<DirectoryInfo> directories,
-        UnzipOptions options,
+    public virtual async Task<IEnumerable<IArchiveFileInfo>> FindArchiveAsync(IEnumerable<DirectoryInfo> directories,
+        IUnzipOptions options,
         bool recursive = true)
     {
-        List<ArchiveFileInfo> infos = [];
+        List<IArchiveFileInfo> infos = [];
 
         foreach (DirectoryInfo directoryInfo in directories)
         {
@@ -141,13 +143,13 @@ public class DefaultUnzipExtractor(
         return infos;
     }
 
-    public virtual async Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(List<FileInfo> files,
-        UnzipOptions options,
+    public virtual async Task<IEnumerable<IArchiveFileInfo>> FindArchiveAsync(IEnumerable<FileInfo> files,
+        IUnzipOptions options,
         bool recursive = true)
     {
-        List<ArchiveFileInfo> infos = [];
+        List<IArchiveFileInfo> infos = [];
 
-        if (files.IsNullOrEmpty())
+        if (files.IsEmpty())
             return [];
 
         foreach (var fileInfo in files.Where(f => options.ExcludePaths.All(e => e != f.FullName)))
@@ -156,10 +158,10 @@ public class DefaultUnzipExtractor(
             if (infos.Any(info => info.Parts.Contains(fileInfo.FullName)))
                 continue;
 
-            ArchiveFileInfo? info = null;
+            IArchiveFileInfo? info = null;
             try
             {
-                info = GetArchiveFileInfo(fileInfo.FullName, options.ExcludeRegexs,
+                info = GetArchiveFileInfo(fileInfo.FullName,options.ExcludeRegexs,
                     options.SupportArchiveTypes);
                 infos.Add(info);
             }
@@ -169,12 +171,14 @@ public class DefaultUnzipExtractor(
             }
         }
 
-        options.ExcludePaths.AddIfNotContains(files.Select(x => x.FullName));
+
+        foreach (string s in files.Select(x => x.FullName))
+            options.ExcludePaths.AddIfNotExist(s);
 
         return infos;
     }
 
-    protected virtual async Task<IArchive?> OpenArchiveAsync(ArchiveFileInfo archiveFileInfo, UnzipOptions options)
+    protected virtual async Task<IArchive?> OpenArchiveAsync(IArchiveFileInfo archiveFileInfo, IUnzipOptions options)
     {
         var lostParts = archiveFileInfo.Parts.Where(x => !File.Exists(x)).ToList();
 
@@ -193,8 +197,8 @@ public class DefaultUnzipExtractor(
             {
                 readerOptions.Password = unzipPassword?.Value;
 
-                IArchive? archive = OpenArchiveUsePassword(archiveFileInfo.Parts, unzipPassword?.Value);
                 archiveFileInfo.Password = unzipPassword?.Value;
+                IArchive? archive = OpenArchiveAndTestPassword(archiveFileInfo.Parts, unzipPassword?.Value);
                 archiveFileInfo.HasTestedPassword = true;
 
                 if (unzipPassword != null)
@@ -209,7 +213,7 @@ public class DefaultUnzipExtractor(
             {
                 // logger.LogError(e, "密码错误。");
 
-                ex = new Exception(@$"测试 {unzipPassword?.Value} 不正确");
+                ex = new CryptographicException(@$"密码 {unzipPassword?.Value} 错误");
                 // archive?.Dispose();
             }
             catch (Exception e)
@@ -221,43 +225,62 @@ public class DefaultUnzipExtractor(
             }
         }
 
+        if (ex is CryptographicException cryptographicException)
+            ex = new CryptographicException("无正确密码");
+
         archiveFileInfo.HasTestedPassword = true;
         archiveFileInfo.Exception = ex;
         throw ex;
     }
 
 
-    protected virtual async Task ExtractsAsync(ArchiveFileInfo info, SemaphoreSlim semaphore,
-        UnzipOptions options)
+    protected virtual async Task ExtractsAsync(IArchiveFileInfo info, SemaphoreSlim semaphore,
+        IUnzipOptions options)
     {
         await semaphore.WaitAsync();
         try
         {
-            info.Children = new ObservableCollection<ArchiveFileInfo>(await ExtractAsync(info, options));
+            // var children = await ExtractAsync(info, options);
+            // info.Children = new ObservableCollection<IArchiveFileInfo>(children);
 
-            foreach (ArchiveFileInfo childArchiveFileInfo in info.Children)
-            {
-                await ExtractsAsync(childArchiveFileInfo, semaphore, options);
-            }
+            await ExtractAsync(info, options);
         }
         catch (Exception e)
         {
             info.Exception = e;
             logger.LogError(e, e.Message);
+            Gc();
         }
         finally
         {
             semaphore.Release();
         }
+
+        foreach (IArchiveFileInfo childArchiveFileInfo in info.Children)
+        {
+            await ExtractsAsync(childArchiveFileInfo, semaphore, options);
+        }
     }
 
-    protected virtual async Task<IEnumerable<ArchiveFileInfo>> ExtractAsync(ArchiveFileInfo archiveFileInfo,
-        UnzipOptions options)
+    protected virtual async Task ExtractAsync(IArchiveFileInfo archiveFileInfo,
+        IUnzipOptions options)
     {
         if (archiveFileInfo is null)
             throw new ArgumentNullException(nameof(archiveFileInfo));
 
-        var archive = await OpenArchiveAsync(archiveFileInfo, options);
+
+        IArchive? archive = null;
+
+        try
+        {
+            archive = await OpenArchiveAsync(archiveFileInfo, options);
+        }
+        catch (Exception e)
+        {
+            archiveFileInfo.Exception = e;
+            throw;
+        }
+
 
         SetUnzipDirectory(archiveFileInfo, options);
 
@@ -275,7 +298,7 @@ public class DefaultUnzipExtractor(
             ExtractFullPath = !options.NoKeepDirectoryStructure,
             Overwrite = options.DuplicateFileHandleType == DuplicateFileHandleType.Overwrite,
             PreserveFileTime = options.PreserveFileTime,
-            PreserveAttributes = options.PreserveAttributes
+            PreserveAttributes = options.PreserveAttributes,
         };
 
 
@@ -312,19 +335,43 @@ public class DefaultUnzipExtractor(
 
         // handler zip files
         archive?.Dispose();
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-
+        Gc();
         UnzippedHandlerParts(archiveFileInfo, options);
 
         archiveFileInfo.ExtractProgress = 1;
 
 
+        var innerArchiveFileInfos = await FindArchiveAsync(archiveFileInfo.UnzipDirectory, options);
+
+        archiveFileInfo.Children.Clear();
+
+        archiveFileInfo.Children.AddIfNotContains(innerArchiveFileInfos);
+
+
+        foreach (IArchiveFileInfo fileInfo in archiveFileInfo.Children)
+        {
+            try
+            {
+                await ExtractAsync(fileInfo, options);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+
         // scan inner zip files
-        return options.UnzipInnerArchive ? await FindArchiveAsync(archiveFileInfo.UnzipDirectory, options) : [];
+        // return options.UnzipInnerArchive ? await FindArchiveAsync(archiveFileInfo.UnzipDirectory, options) : [];
     }
 
-    protected virtual void SetUnzipDirectory(ArchiveFileInfo archiveFileInfo, UnzipOptions options)
+    protected virtual void Gc()
+    {
+        GC.Collect(2);
+        GC.WaitForPendingFinalizers();
+    }
+
+    protected virtual void SetUnzipDirectory(IArchiveFileInfo archiveFileInfo, IUnzipOptions options)
     {
         if (!archiveFileInfo.UnzipDirectory.IsEmpty())
             return;
@@ -345,7 +392,7 @@ public class DefaultUnzipExtractor(
         }
     }
 
-    protected virtual void UnzippedHandlerParts(ArchiveFileInfo archiveFileInfo, UnzipOptions options)
+    protected virtual void UnzippedHandlerParts(IArchiveFileInfo archiveFileInfo, IUnzipOptions options)
     {
         // 最新的 switch 语法处理 unzipPackageAfterHandleType
         switch (options.UnzipPackageAfterHandleType)
@@ -384,8 +431,8 @@ public class DefaultUnzipExtractor(
     /// </summary>
     /// <param name="filePath"></param>
     /// <exception cref="UserFriendlyException"></exception>
-    protected virtual void CheckMatchArchiveFile(string filePath, List<string>? excludeRegexs = null,
-        List<ArchiveType>? supportArchiveTypes = null)
+    protected virtual void CheckMatchArchiveFile(string filePath, IEnumerable<string>? excludeRegexs = null,
+        IEnumerable<ArchiveType>? supportArchiveTypes = null)
     {
         if (filePath is null)
             throw new ArgumentNullException(nameof(filePath));
@@ -394,7 +441,7 @@ public class DefaultUnzipExtractor(
             throw new FileNotFoundException("未找到文件。", filePath);
 
         var fileName = Path.GetFileName(filePath);
-        if (!excludeRegexs.IsNullOrEmpty())
+        if (!excludeRegexs.IsEmpty())
         {
             foreach (var excludeRegex in excludeRegexs)
             {
@@ -409,7 +456,7 @@ public class DefaultUnzipExtractor(
         if (type == null)
             throw new Exception("未知的压缩文件类型");
 
-        if (!supportArchiveTypes.IsNullOrEmpty() && !supportArchiveTypes.Contains(type.Value))
+        if (!supportArchiveTypes.IsEmpty() && !supportArchiveTypes.Contains(type.Value))
             throw new Exception("不支持的压缩文件类型");
     }
 
@@ -419,9 +466,9 @@ public class DefaultUnzipExtractor(
     /// <param name="archiveFileInfo"></param>
     /// <param name="password"></param>
     /// <exception cref="ArgumentNullException"></exception>
-    protected virtual IArchive OpenArchiveUsePassword(List<string> filePaths, string? password = null)
+    protected virtual IArchive OpenArchiveAndTestPassword(IEnumerable<string> filePaths, string? password = null)
     {
-        if (filePaths.IsNullOrEmpty())
+        if (filePaths.IsEmpty())
             throw new ArgumentException("值不可为空", nameof(filePaths));
 
         var files = filePaths.Select(x => new FileInfo(x)).ToList();
@@ -430,17 +477,47 @@ public class DefaultUnzipExtractor(
         var readerOptions = new ReaderOptions();
         readerOptions.Password = password;
 
-        return ArchiveFactory.Open(files, readerOptions);
+        var archive = ArchiveFactory.Open(files, readerOptions);
+
+
+        // 测试打开流，打不开说明密码错误
+        using var steam = archive.Entries.First().OpenEntryStream();
+        //
+        // using var steams = new MemoryStream();
+        // archive.Entries.First().WriteTo(steams);
+        
+        Console.WriteLine("成功");
+
+        // if (password.IsEmpty() && archive.Entries.Any(x => x.IsEncrypted))
+        // {
+        //     
+        //     var source = archive.Entries.OrderBy(x => x.Size).FirstOrDefault((x => x.IsEncrypted));
+        //
+        //     // 测试打开流
+        //     using var steam = source.OpenEntryStream();
+        //     
+        //     // if (password.IsEmpty())
+        //     //     throw new CryptographicException("压缩文件需要密码");
+        //     // else
+        //     // {
+        //     //     var source = archive.Entries.OrderBy(x => x.Size).FirstOrDefault((x => x.IsEncrypted));
+        //     //
+        //     //     // 测试打开流
+        //     //     using var steam = source.OpenEntryStream();
+        //     // }
+        // }
+
+        return archive;
     }
 
-    protected virtual List<UnzipPassword> GetPasswords(bool choicePasswordOrderByUseCount)
+    protected virtual List<IUnzipPassword> GetPasswords(bool choicePasswordOrderByUseCount)
     {
         var order = passwordRepository.GetAllPasswords().OrderBy(x => x.ManualSort);
 
         if (choicePasswordOrderByUseCount)
             order = order.ThenBy(x => x.UseCount);
 
-        List<UnzipPassword> passwords =
+        List<IUnzipPassword> passwords =
             [null, .. order.ToList()];
 
         return passwords;

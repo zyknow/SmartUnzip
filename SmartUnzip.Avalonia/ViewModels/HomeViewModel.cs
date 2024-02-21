@@ -2,7 +2,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using Avalonia.Input;
 using Bing.Extensions;
 using Bing.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -11,18 +10,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SmartUnzip.Core;
 using SmartUnzip.Core.Enums;
-using SmartUnzip.Core.Models;
 
 namespace SmartUnzip.Avalonia.ViewModels;
 
 public partial class HomeViewModel : ObservableObject
 {
-    public IEnumerable<UnzipPackageAfterHandleType> UnzipPackageAfterHandleTypes
-        => Enum.GetValues(typeof(UnzipPackageAfterHandleType)).Cast<UnzipPackageAfterHandleType>();
-
-    public IEnumerable<DuplicateFileHandleType> DuplicateFileHandleTypes
-        => Enum.GetValues(typeof(DuplicateFileHandleType)).Cast<DuplicateFileHandleType>();
-
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowUnzipPackageMovePath))]
     UnzipOptions _options;
@@ -43,7 +35,7 @@ public partial class HomeViewModel : ObservableObject
 
         _unzipExtractor = App.ServiceProvider.GetRequiredService<IUnzipExtractor>();
 
-        _archiveFileInfos.CollectionChanged += (sender, args) => { OnPropertyChanged(nameof(CanUnzip)); };
+        ArchiveFileInfos.CollectionChanged += (sender, args) => { OnPropertyChanged(nameof(CanUnzip)); };
     }
 
     [RelayCommand]
@@ -56,6 +48,7 @@ public partial class HomeViewModel : ObservableObject
         DirectoryHelper.Delete(newPath);
         DirectoryHelper.Copy(originPath, newPath);
         ArchiveFileInfos.Clear();
+        Options.ResetExcludePaths();
         await OnDrop([newPath]);
     }
 
@@ -81,13 +74,16 @@ public partial class HomeViewModel : ObservableObject
 
             if (!files.IsEmpty())
             {
-                var archiveFileInfos = await unzipExtractor.FindArchiveAsync(files, Options);
+                var archiveFileInfos =
+                    (await unzipExtractor.FindArchiveAsync(files, Options)).OfType<ArchiveFileInfo>();
+
                 ArchiveFileInfos.AddIfNotContains(archiveFileInfos);
             }
 
             if (!directories.IsEmpty())
             {
-                var archiveFileInfos = await unzipExtractor.FindArchiveAsync(directories, Options);
+                var archiveFileInfos =
+                    (await unzipExtractor.FindArchiveAsync(directories, Options)).OfType<ArchiveFileInfo>();
                 ArchiveFileInfos.AddIfNotContains(archiveFileInfos);
             }
         }
@@ -95,9 +91,25 @@ public partial class HomeViewModel : ObservableObject
 
 
     [RelayCommand]
+    public void RemoveArchiveInfoItem(ArchiveFileInfo archiveFileInfo)
+    {
+        ArchiveFileInfos.Remove(archiveFileInfo);
+    }
+
+    [RelayCommand]
     public async Task Unzip()
     {
-        await _unzipExtractor.ExtractsAsync(ArchiveFileInfos.ToList(), Options);
+        Task.Run(async () =>
+        {
+            try
+            {
+                await _unzipExtractor.ExtractsAsync(ArchiveFileInfos.ToList(), Options);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        });
     }
 
     public void StateChanged()

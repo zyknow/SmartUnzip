@@ -15,6 +15,11 @@
         <PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.7" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.7" />
+        <PackageReference Include="Irihi.Ursa" Version="0.2.0-beta20240129" />
+        <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="0.2.0-beta20240129" />
+        <PackageReference Include="Projektanker.Icons.Avalonia" Version="9.0.1" />
+        <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.0.1" />
+        <PackageReference Include="Projektanker.Icons.Avalonia.MaterialDesign" Version="9.0.1" />
         <PackageReference Include="Semi.Avalonia" Version="11.0.7" />
         <PackageReference Include="Semi.Avalonia.DataGrid" Version="11.0.7" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
@@ -24,5 +29,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\SmartUnzip.Core\SmartUnzip.Core.csproj" />
+    </ItemGroup>
+
+
+    <ItemGroup>
+      <Folder Include="Converter\" />
     </ItemGroup>
 </Project>

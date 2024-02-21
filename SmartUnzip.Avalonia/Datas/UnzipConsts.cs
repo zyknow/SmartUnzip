@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using SharpCompress.Common;
+﻿using SharpCompress.Common;
 using SmartUnzip.Core.Enums;
 
-namespace SmartUnzip.Core.Datas;
+namespace SmartUnzip.Avalonia.Datas;
 
 public class UnzipConsts
 {

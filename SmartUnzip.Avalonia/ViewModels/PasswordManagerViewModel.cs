@@ -1,9 +1,8 @@
 ﻿using System.Collections.ObjectModel;
+using System.Linq;
 using Bing.Collections;
-using Bing.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SmartUnzip.Core;
-using SmartUnzip.Core.Models;
 
 namespace SmartUnzip.Avalonia.ViewModels;
 
@@ -28,6 +27,7 @@ public partial class PasswordManagerViewModel : ObservableObject
     {
         var unzipPw = new UnzipPassword(password);
         _passwordRepository.RemovePassword(unzipPw);
+        LoadPasswords();
     }
 
     public void Add(string password)
@@ -35,11 +35,12 @@ public partial class PasswordManagerViewModel : ObservableObject
         var unzipPw = new UnzipPassword(password);
         _passwordRepository.AddPassword(unzipPw);
         AddPassword = "";
+        LoadPasswords();
     }
 
     public void LoadPasswords()
     {
         Passwords.Clear();
-        Passwords.AddRange(_passwordRepository.GetAllPasswords());
+        Passwords.AddRange(_passwordRepository.GetAllPasswords().OfType<UnzipPassword>());
     }
 }

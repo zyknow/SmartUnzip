@@ -5,27 +5,21 @@
              xmlns:viewModels="clr-namespace:SmartUnzip.Avalonia.ViewModels"
              xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=System.ComponentModel.TypeConverter"
              xmlns:enums="clr-namespace:SmartUnzip.Core.Enums;assembly=SmartUnzip.Core"
-             xmlns:converter="clr-namespace:SmartUnzip.Avalonia.Converter"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:avalonia="https://github.com/projektanker/icons.avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              Padding="8"
              x:DataType="viewModels:HomeViewModel"
              x:Class="SmartUnzip.Avalonia.Views.HomeView">
 
-    <UserControl.Resources>
-        <converter:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
-        <converter:EnumsDescriptionConverter x:Key="EnumsDescriptionConverter" />
-    </UserControl.Resources>
-
-    <UserControl.Styles>
-        <Style Selector="WrapPanel CheckBox">
-            <Setter Property="Margin" Value="50,0,0,0" />
-        </Style>
-    </UserControl.Styles>
-
     <Grid ColumnDefinitions="*, Auto, *">
-
         <StackPanel Spacing="4">
             <WrapPanel Orientation="Horizontal">
+                <WrapPanel.Styles>
+                    <Style Selector="CheckBox">
+                        <Setter Property="Margin" Value="50,0,0,0" />
+                    </Style>
+                </WrapPanel.Styles>
                 <CheckBox IsChecked="{Binding Options.PreserveFileTime}">保存文件时间</CheckBox>
                 <CheckBox IsChecked="{Binding Options.PreserveAttributes}">保存Windows文件属性</CheckBox>
                 <CheckBox IsChecked="{Binding Options.NoKeepDirectoryStructure}">不保留解压文件结构</CheckBox>
@@ -37,10 +31,12 @@
 
             <StackPanel Orientation="Horizontal">
                 <Label VerticalAlignment="Center">解压包后处理方式：</Label>
-                <ComboBox
-                    SelectionChanged="SelectingItemsControl_OnSelectionChanged"
-                    ItemsSource="{Binding UnzipPackageAfterHandleTypes, Converter={StaticResource EnumsDescriptionConverter}}"
-                    SelectedItem="{Binding Options.UnzipPackageAfterHandleType,Converter={StaticResource EnumDescriptionConverter}}" />
+
+                <u:EnumSelector x:Name="EnumSelector" MinWidth="150"
+                                Value="{Binding Options.UnzipPackageAfterHandleType}"
+
+                                DisplayDescription="True" EnumType="{x:Type enums:UnzipPackageAfterHandleType}">
+                </u:EnumSelector>
 
             </StackPanel>
             <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding ShowUnzipPackageMovePath,Mode=TwoWay}"
@@ -54,9 +50,9 @@
 
             <StackPanel Orientation="Horizontal">
                 <Label VerticalAlignment="Center">解压包后处理方式：</Label>
-                <ComboBox
-                    ItemsSource="{Binding DuplicateFileHandleTypes, Converter={StaticResource EnumsDescriptionConverter}}"
-                    SelectedItem="{Binding Options.DuplicateFileHandleType,Converter={StaticResource EnumDescriptionConverter}}" />
+                <u:EnumSelector MinWidth="150" Value="{Binding Options.DuplicateFileHandleType}"
+                                DisplayDescription="True" EnumType="{x:Type enums:DuplicateFileHandleType}">
+                </u:EnumSelector>
 
             </StackPanel>
 
@@ -72,26 +68,84 @@
                 <Button IsEnabled="{Binding CanUnzip}" Command="{Binding UnzipCommand}">解压</Button>
             </StackPanel>
             <TreeView Focusable="False" Grid.Row="1" Margin="10"
-
                       ItemsSource="{Binding ArchiveFileInfos}"
                       SelectionMode="Multiple">
+
+                <TreeView.Styles>
+                    <Style Selector="Border:Pressed">
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                    <Style Selector="Border:selected">
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                    <Style Selector="Border:pointerover">
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                </TreeView.Styles>
+                
+                
                 <TreeView.ItemTemplate>
                     <TreeDataTemplate ItemsSource="{Binding Children}">
-                        <Border HorizontalAlignment="Left"
-                                BorderBrush="Gray" BorderThickness="1"
-                                CornerRadius="5" Padding="15 3">
+                        <Border HorizontalAlignment="Stretch"
+                                BorderBrush="Gray" BorderThickness="0.3"
+                                CornerRadius="5">
                             <StackPanel>
-                                <TextBlock Text="{Binding Name}">
-                                    123
-                                </TextBlock>
-                                <ProgressBar  Value="{Binding ExtractProgress}"></ProgressBar>
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Left">
+                                        <TextBlock Classes.IsMulti="{Binding IsMulti}"
+                                                   Margin="5,0,5,0"
+                                                   Text="{Binding Name}">
+                                            <!-- 123 -->
+                                            <TextBlock.Styles>
+                                                <Style Selector="TextBlock.IsMulti">
+                                                    <Setter Property="Foreground" Value="MediumPurple"></Setter>
+                                                </Style>
+                                            </TextBlock.Styles>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                                HorizontalAlignment="Right">
+
+                                        <TextBlock IsVisible="{Binding ShowPassword}"
+                                                   Text="{Binding Password,StringFormat='密码：{0}'}">
+                                        </TextBlock>
+                                        <TextBlock IsVisible="{Binding ShowException}" Foreground="OrangeRed"
+                                                   Text="{Binding Exception.Message}">
+                                        </TextBlock>
+
+                                        <Button Margin="0,0,5,0" avalonia:Attached.Icon="fa-trash" Height="20"
+                                                Padding="0"
+                                                Command="{Binding ((viewModels:HomeViewModel)DataContext).RemoveArchiveInfoItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding }">
+                                        </Button>
+
+                                        <!-- <avalonia:Icon Value="fa-delete" /> -->
+
+                                    </StackPanel>
+
+
+                                </DockPanel>
+
+                                <ProgressBar
+                                    Classes.IsDone="{Binding Unzipped}" Value="{Binding ExtractProgress}"
+                                    Maximum="1" Minimum="0">
+
+                                    <ProgressBar.Styles>
+                                        <Style Selector="ProgressBar.IsDone">
+                                            <Setter Property="Foreground" Value="ForestGreen">
+                                            </Setter>
+                                        </Style>
+                                    </ProgressBar.Styles>
+
+                                </ProgressBar>
                             </StackPanel>
 
                         </Border>
                     </TreeDataTemplate>
 
                 </TreeView.ItemTemplate>
-                <TreeViewItem>123</TreeViewItem>
+                <!-- <TreeViewItem>123</TreeViewItem> -->
             </TreeView>
         </Grid>
 

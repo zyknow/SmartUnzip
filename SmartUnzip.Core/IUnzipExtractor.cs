@@ -15,16 +15,18 @@ public interface IUnzipExtractor
     /// <param name="options"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    Task ExtractsAsync(List<ArchiveFileInfo> archiveFileInfo, UnzipOptions options);
+    Task ExtractsAsync(IEnumerable<IArchiveFileInfo> archiveFileInfo, IUnzipOptions options);
 
     /// <summary>
     /// 获取压缩文件信息
     /// </summary>
     /// <param name="filePath"></param>
-    /// <exception cref="UserFriendlyException"></exception>
+    /// <param name="excludeRegexs"></param>
+    /// <param name="supportArchiveTypes"></param>
     /// <returns></returns>
-    ArchiveFileInfo GetArchiveFileInfo(string filePath, List<string>? excludeRegexs = null,
-        List<ArchiveType>? supportArchiveTypes = null);
+    IArchiveFileInfo GetArchiveFileInfo(string filePath,
+        IEnumerable<string>? excludeRegexs = null,
+        IEnumerable<ArchiveType>? supportArchiveTypes = null);
 
     /// <summary>
     /// 扫描压缩文件
@@ -33,7 +35,7 @@ public interface IUnzipExtractor
     /// <param name="options"></param>
     /// <param name="recursive"></param>
     /// <returns></returns>
-    Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(string directory, UnzipOptions options,
+    Task<IEnumerable<IArchiveFileInfo>> FindArchiveAsync(string directory, IUnzipOptions options,
         bool recursive = true);
 
     /// <summary>
@@ -43,14 +45,14 @@ public interface IUnzipExtractor
     /// <param name="options"></param>
     /// <param name="recursive"></param>
     /// <returns></returns>
-    Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(DirectoryInfo directory, UnzipOptions options,
+    Task<IEnumerable<IArchiveFileInfo>> FindArchiveAsync(DirectoryInfo directory, IUnzipOptions options,
         bool recursive = true);
 
-    Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(List<FileInfo> files,
-        UnzipOptions options,
+    Task<IEnumerable<IArchiveFileInfo>> FindArchiveAsync(IEnumerable<FileInfo> files,
+        IUnzipOptions options,
         bool recursive = true);
 
-    Task<IEnumerable<ArchiveFileInfo>> FindArchiveAsync(List<DirectoryInfo> directories,
-        UnzipOptions options,
+    Task<IEnumerable<IArchiveFileInfo>> FindArchiveAsync(IEnumerable<DirectoryInfo> directories,
+        IUnzipOptions options,
         bool recursive = true);
 }

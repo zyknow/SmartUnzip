@@ -1,7 +1,4 @@
-﻿using System.Collections.Immutable;
-using Avalonia.Controls;
-using CommunityToolkit.Mvvm.ComponentModel;
-using SmartUnzip.Avalonia.Views;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace SmartUnzip.Avalonia.ViewModels;
 

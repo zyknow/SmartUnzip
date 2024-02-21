@@ -2,5 +2,5 @@
 
 public interface IUnzipUniqueCalculator
 {
-    public string GetUniqueFileName(string unzipFilePath, UnzipOptions options);
+    public string GetUniqueFileName(string unzipFilePath, IUnzipOptions options);
 }
