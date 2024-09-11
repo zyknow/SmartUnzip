@@ -1,0 +1,54 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:SmartUnzip.ViewModels"
+             xmlns:components="clr-namespace:SmartUnzip.Components"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:avalonia="https://github.com/projektanker/icons.avalonia"
+             xmlns:views="clr-namespace:SmartUnzip.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SmartUnzip.Views.SettingsView"
+             x:DataType="viewModels:SettingsViewModel">
+    <Design.DataContext>
+        <viewModels:SettingsViewModel />
+    </Design.DataContext>
+    <Grid RowDefinitions="Auto,10,*">
+        <Button HorizontalAlignment="Right" Command="{Binding SaveSettingsCommand}">保存</Button>
+        <ScrollViewer Grid.Row="2">
+            <StackPanel Margin="0,0,20,0">
+                <u:Form
+                    HorizontalAlignment="Stretch"
+                    DataContext="{Binding SettingsOptions}"
+                    LabelPosition="Left"
+                    LabelWidth="Auto">
+
+                    <u:FormGroup Header="基本设置">
+                        <TextBox u:FormItem.Label="7z.exe文件路径" HorizontalAlignment="Stretch"
+                                 Text="{Binding SevenZFilePath}">
+                            <TextBox.InnerRightContent>
+                                <Button
+                                    Theme="{DynamicResource BorderlessButton}"
+                                    avalonia:Attached.Icon="mdi-folder-open"
+                                    Command="{Binding ((viewModels:SettingsViewModel)DataContext).SelectSevenZFilePathCommand,RelativeSource={RelativeSource AncestorType=views:SettingsView}}">
+                                </Button>
+                            </TextBox.InnerRightContent>
+                        </TextBox>
+
+                        <NumericUpDown u:FormItem.Label="最大解压线程(数量表示并发操作的压缩包数量)" Value="{Binding MaxUnzipThreadCount}"></NumericUpDown>
+                        <NumericUpDown u:FormItem.Label="最大测试密码线程(数量表示并发操作的压缩包数量)"
+                                       Value="{Binding MaxTestPasswordThreadCount}">
+                        </NumericUpDown>
+                        
+                        <u:KeyGestureInput Gesture="{Binding }" u:FormItem.Label="开启悬浮窗后快速添加密码快捷键(剪切板)" HorizontalAlignment="Left" />
+
+                    </u:FormGroup>
+
+                </u:Form>
+                <u:FormGroup Header="解压设置">
+                    <components:UnzipOptionsConfigContent DataContext="{Binding SettingsOptions.UnzipOptions}" />
+                </u:FormGroup>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

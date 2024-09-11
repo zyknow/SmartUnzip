@@ -1,0 +1,43 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:core="clr-namespace:SmartUnzip.Core"
+             xmlns:viewModels="clr-namespace:SmartUnzip.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="450"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:views="clr-namespace:SmartUnzip.Views"
+             xmlns:components="clr-namespace:SmartUnzip.Components"
+             x:Class="SmartUnzip.Views.HomeView"
+             x:DataType="viewModels:HomeViewModel">
+    <Design.DataContext>
+        <viewModels:HomeViewModel />
+    </Design.DataContext>
+    <Grid RowDefinitions="Auto,20,*">
+        <Grid ColumnDefinitions="Auto,50,*">
+            
+            <Button i:Attached.Icon="mdi-plus"
+                    Command="{Binding AddUnzipItemCommand}">
+            </Button>
+            
+            <components:PasswordInputContent Grid.Column="2"/>
+
+        </Grid>
+        <ScrollViewer Grid.Row="2">
+            <ItemsControl ItemsSource="{Binding Unzips}" Margin="0,0,20,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:UnzipItemViewModel">
+                        <views:HomeUnzipItemView DataContext="{Binding }" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

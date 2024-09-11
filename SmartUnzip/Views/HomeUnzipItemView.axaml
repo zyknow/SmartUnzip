@@ -1,0 +1,124 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:SmartUnzip.ViewModels"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:views="clr-namespace:SmartUnzip.Views"
+             xmlns:components="clr-namespace:SmartUnzip.Components"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SmartUnzip.Views.HomeUnzipItemView"
+             x:DataType="viewModels:UnzipItemViewModel">
+
+    <Design.DataContext>
+        <viewModels:UnzipItemViewModel />
+    </Design.DataContext>
+
+    <Panel>
+
+        <Border Classes.IsRunning="{Binding IsRunning}" x:Name="DragBorder" Theme="{StaticResource CardBorder}"
+                Margin="4"
+                Padding="4" DragDrop.AllowDrop="True">
+            <Border.Styles>
+                <Style Selector="Border.IsRunning">
+                    <Setter Property="BorderBrush" Value="Yellow"></Setter>
+                    <Setter Property="BorderThickness" Value="3"></Setter>
+                </Style>
+            </Border.Styles>
+
+
+            <Grid RowDefinitions="Auto,5,Auto,5,*" MinWidth="400" Margin="8">
+                <Grid Grid.Row="0">
+                    <StackPanel HorizontalAlignment="Stretch">
+                        <Panel Margin="4">
+                            <ToggleButton
+                                i:Attached.Icon="mdi-tune-vertical"
+                                HorizontalAlignment="Left"
+                                IsChecked="{Binding ShowAdvanced,Mode=TwoWay}">
+                            </ToggleButton>
+                            <Button IsVisible="{Binding !IsRunning}" i:Attached.Icon="mdi-play"
+                                    Command="{Binding StartUnzipCommand}" />
+                            <Button IsVisible="{Binding IsRunning}" Foreground="Red" i:Attached.Icon="mdi-stop"
+                                    Command="{Binding StopUnzipCommand}" />
+                            <Button IsEnabled="{Binding !IsRunning}" HorizontalAlignment="Right"
+                                    Foreground="Red" i:Attached.Icon="mdi-delete"
+                                    Command="{Binding ((viewModels:HomeViewModel)DataContext).RemoveUnzipItemCommand,RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=views:HomeView}}"
+                                    CommandParameter="{Binding}" />
+                        </Panel>
+                        <Panel IsEnabled="{Binding !IsRunning}"
+                               IsVisible="{Binding ShowAdvanced,Mode=TwoWay}"
+                               HorizontalAlignment="Stretch">
+                            <components:UnzipOptionsConfigContent DataContext="{Binding UnzipOptions}" />
+                        </Panel>
+                    </StackPanel>
+                </Grid>
+                <ProgressBar
+                    Grid.Row="2"
+                    Maximum="100"
+                    Minimum="0"
+                    Value="{Binding Progress}"
+                    Foreground="{Binding ProgressColor}"
+                    ShowProgressText="True" />
+                <Grid Grid.Row="4">
+                    <TreeView ItemsSource="{Binding Items}" Margin="0" Padding="0">
+                        <TreeView.Styles>
+                            <Style Selector="TreeViewItem:pointerover /template/ Border">
+                                <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                            <Style Selector="TreeViewItem:selected /template/ Border">
+                                <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                        </TreeView.Styles>
+                        <TreeView.ItemContainerTheme>
+                            <ControlTheme TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                                <Setter Property="IsExpanded" Value="True" />
+                            </ControlTheme>
+                        </TreeView.ItemContainerTheme>
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate ItemsSource="{Binding Children}">
+                                <Border
+                                    BorderBrush="{Binding ExtractColor}"
+                                    BorderThickness="1.5"
+                                    Classes.IsSucceeded="{Binding ExtractStatus}"
+                                    CornerRadius="5" Padding="5,0,0,0">
+
+                                    <DockPanel>
+                                        <!-- <Button DockPanel.Dock="Right" Classes="Danger Small" Margin="0" -->
+                                        <!--         Padding="0" Width="50" i:Attached.Icon="mdi-delete" -->
+                                        <!--         Command="{Binding ((viewModels:HomeViewModel)DataContext).RemoveUnzipItemCommand,RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=views:HomeView}}" -->
+                                        <!--         CommandParameter="{Binding $parent.DataContext }"> -->
+                                        <!-- </Button> -->
+                                        <StackPanel Orientation="Horizontal" Spacing="16">
+                                            <Label FontSize="14" VerticalAlignment="Center"
+                                                   Content="{Binding FileName}">
+                                            </Label>
+                                            <i:Icon IsVisible="{Binding IsVolume}"
+                                                    Value="mdi-format-list-group"
+                                                    Foreground="Magenta">
+                                            </i:Icon>
+
+                                            <TextBlock VerticalAlignment="Center"
+                                                       Text="{Binding Message}"
+                                                       Foreground="{Binding ExtractColor}"
+                                                       FontSize="14"
+                                                       TextWrapping="WrapWithOverflow">
+                                            </TextBlock>
+
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </Grid>
+            </Grid>
+
+
+        </Border>
+        <Panel ToolTip.Tip="拖拽文件或文件夹到此处" HorizontalAlignment="Right"
+               VerticalAlignment="Top" Width="20" Height="20" Background="Transparent">
+            <i:Icon FontSize="20" ZIndex="100" Foreground="Goldenrod" Value="mdi-help-circle-outline" />
+        </Panel>
+    </Panel>
+
+</UserControl>

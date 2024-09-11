@@ -1,0 +1,69 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:core="clr-namespace:SmartUnzip.Core"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:components="clr-namespace:SmartUnzip.Components"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="600"
+             x:Class="SmartUnzip.Components.UnzipOptionsConfigContent"
+             x:DataType="core:UnzipOptions">
+    <u:Form
+        HorizontalAlignment="Stretch"
+        DataContext="{Binding .}"
+        LabelPosition="Left"
+        LabelWidth="Auto">
+        <u:EnumSelector u:FormItem.Label="重复文件" Width="100"
+                        DisplayDescription="True"
+                        EnumType="core:DuplicateFileHandleMode"
+                        Value="{Binding DuplicateFileHandleMode}">
+        </u:EnumSelector>
+
+        <CheckBox u:FormItem.Label="根据密码使用次数排序测试"
+                  IsChecked="{Binding UnzipSortByPasswordUseCount}">
+        </CheckBox>
+
+        <CheckBox u:FormItem.Label="解压完成后删除压缩包"
+                  IsChecked="{Binding UnzippedDeleteArchiveFile}">
+        </CheckBox>
+
+        <CheckBox u:FormItem.Label="不保留目录结构"
+                  IsChecked="{Binding NotKeepDirectoryStructure}">
+        </CheckBox>
+
+        <CheckBox u:FormItem.Label="解压压缩包内的压缩包"
+                  IsChecked="{Binding RecursiveUnzip}">
+        </CheckBox>
+
+        <u:EnumSelector u:FormItem.Label="解压创建文件夹处理" Width="100"
+                        DisplayDescription="True"
+                        EnumType="core:UnzipCreateSeparateMode"
+                        Value="{Binding UnzipCreateSeparateMode}">
+        </u:EnumSelector>
+
+        <TextBox u:FormItem.Label="包含的扩展名" HorizontalAlignment="Stretch"
+                 Text="{Binding IncludeExtensions}">
+        </TextBox>
+
+        <TextBox u:FormItem.Label="排除的扩展名" HorizontalAlignment="Stretch"
+                 Text="{Binding ExcludeExtensions}">
+        </TextBox>
+
+        <TextBox u:FormItem.Label="排除扫描的文件夹或文件" HorizontalAlignment="Stretch"
+                 Text="{Binding SkipUnzippedSearchFileOrFolders}">
+        </TextBox>
+
+        <TextBox u:FormItem.Label="解压至" HorizontalAlignment="Stretch"
+                 Text="{Binding OutputPath}">
+            <TextBox.InnerRightContent>
+                <Button
+                    Theme="{DynamicResource BorderlessButton}"
+                    i:Attached.Icon="mdi-folder-open"
+                    Command="{Binding SelectOutputFolderCommand,RelativeSource={RelativeSource AncestorType=components:UnzipOptionsConfigContent}}">
+                </Button>
+            </TextBox.InnerRightContent>
+        </TextBox>
+    </u:Form>
+
+</UserControl>

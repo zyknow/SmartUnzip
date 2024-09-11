@@ -1,0 +1,90 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:SmartUnzip.ViewModels"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SmartUnzip.Views.MainView"
+             x:DataType="viewModels:MainViewModel">
+
+    <Design.DataContext>
+        <viewModels:MainViewModel />
+    </Design.DataContext>
+
+    <Grid ColumnDefinitions="Auto,*">
+        <Border>
+            <Panel>
+                <!-- <Button Click="ChangeMenuCollapsed" HorizontalAlignment="Right" VerticalAlignment="Top"> -->
+                <!--     <i:Icon -->
+                <!--         Classes.IsCollapsed="{Binding !#Menu.IsHorizontalCollapsed}" -->
+                <!--         Value="mdi-menu-close"> -->
+                <!--         <i:Icon.Styles> -->
+                <!--             <Style Selector="i|Icon.IsCollapsed"> -->
+                <!--                 <Setter Property="Foreground" Value="{DynamicResource SemiBlue5}"></Setter> -->
+                <!--                 <Setter Property="Value" Value="mdi-menu-open"></Setter> -->
+                <!--             </Style> -->
+                <!--         </i:Icon.Styles> -->
+                <!--     </i:Icon> -->
+                <!-- </Button> -->
+                <u:NavMenu
+                    Margin="8"
+                    x:Name="Menu"
+                    ExpandWidth="50"
+                    ItemsSource="{Binding Menus.MenuItems}"
+                    CommandBinding="{Binding ActivateCommand}"
+                    HeaderBinding="{Binding MenuHeader}"
+                    IsHorizontalCollapsed="True"
+                    IconBinding="{Binding MenuIconName}">
+                    <u:NavMenu.Header>
+
+                        <Border ClipToBounds="True" CornerRadius="5" Width="40"
+                                Height="40" Margin="0,0,0,10">
+                            <Image
+                                RenderOptions.BitmapInterpolationMode="HighQuality"
+                                Source="../Assets/icon.ico" />
+                        </Border>
+                        <!-- <Grid ColumnDefinitions="Auto,10,*" Margin="8"> -->
+                        <!--     <Border ClipToBounds="True" CornerRadius="5" Width="30" -->
+                        <!--             Height="30"> -->
+                        <!--         <Image -->
+                        <!--             u:NavMenu.CanToggle="True" -->
+                        <!--             RenderOptions.BitmapInterpolationMode="HighQuality" -->
+                        <!--             Source="../Assets/icon.ico" /> -->
+                        <!--     </Border> -->
+                        <!-- -->
+                        <!--     <TextBlock -->
+                        <!--         Grid.Column="2" -->
+                        <!--         Text="SmartUnzip" -->
+                        <!--         Classes="H7" -->
+                        <!--         IsVisible="{Binding !#Menu.IsHorizontalCollapsed}" -->
+                        <!--         VerticalAlignment="Center" -->
+                        <!--         Theme="{DynamicResource TitleTextBlock}" /> -->
+                        <!-- </Grid> -->
+                    </u:NavMenu.Header>
+                    <u:NavMenu.IconTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <i:Icon
+                                Classes.IsActive="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=u:NavMenuItem}, Path=IsHighlighted, Mode=TwoWay}"
+                                Value="{Binding }">
+                                <i:Icon.Styles>
+                                    <Style Selector="i|Icon.IsActive">
+                                        <Setter Property="Foreground" Value="{DynamicResource SemiBlue5}"></Setter>
+                                    </Style>
+                                </i:Icon.Styles>
+                            </i:Icon>
+                        </DataTemplate>
+                    </u:NavMenu.IconTemplate>
+                </u:NavMenu>
+
+            </Panel>
+        </Border>
+
+        <ContentControl
+            Grid.Column="1"
+            Margin="12 60 12 12"
+            Content="{Binding Content}">
+        </ContentControl>
+    </Grid>
+</UserControl>
