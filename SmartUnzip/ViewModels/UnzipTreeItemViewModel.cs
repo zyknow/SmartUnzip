@@ -2,10 +2,10 @@
 
 namespace SmartUnzip.ViewModels;
 
-public partial class UnzipTreeItemViewModel : ViewModelBase
+public partial class UnzipTreeItemViewModel(string filePath) : ViewModelBase
 {
-    [ObservableProperty] private string _fileName;
-    [ObservableProperty] private string _filePath;
+    [ObservableProperty] private string _fileName = System.IO.Path.GetFileName(filePath);
+    [ObservableProperty] private string _filePath = filePath;
 
     [NotifyPropertyChangedFor(nameof(ExtractColor))] [ObservableProperty]
     private ExtractStatus _extractStatus;
@@ -13,15 +13,11 @@ public partial class UnzipTreeItemViewModel : ViewModelBase
     [ObservableProperty] private string message;
     [ObservableProperty] bool isVolume;
 
-    [ObservableProperty] private string passowrd;
+    [ObservableProperty] private string password;
 
     [ObservableProperty] private string outputPath;
 
-    public UnzipTreeItemViewModel(string filePath)
-    {
-        FileName = System.IO.Path.GetFileName(filePath);
-        FilePath = filePath;
-    }
+    public UnzipTreeItemViewModel? Parent;
 
     public IBrush ExtractColor => ExtractStatus switch
     {

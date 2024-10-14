@@ -1,8 +1,4 @@
-﻿using System.Text.Json;
-using Avalonia.Controls;
-using Avalonia.Platform.Storage;
-using CommunityToolkit.Mvvm.Input;
-using SmartUnzip.Core;
+﻿using CommunityToolkit.Mvvm.Input;
 
 namespace SmartUnzip.ViewModels;
 

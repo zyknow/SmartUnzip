@@ -24,35 +24,42 @@
                   IsChecked="{Binding UnzipSortByPasswordUseCount}">
         </CheckBox>
 
-        <CheckBox u:FormItem.Label="解压完成后删除压缩包"
-                  IsChecked="{Binding UnzippedDeleteArchiveFile}">
-        </CheckBox>
-
-        <CheckBox u:FormItem.Label="不保留目录结构"
-                  IsChecked="{Binding NotKeepDirectoryStructure}">
-        </CheckBox>
-
         <CheckBox u:FormItem.Label="解压压缩包内的压缩包"
                   IsChecked="{Binding RecursiveUnzip}">
         </CheckBox>
+        
+        <CheckBox u:FormItem.Label="解压完成后删除压缩包"
+                  IsChecked="{Binding UnzippedDeleteArchiveFile}">
+        </CheckBox>
+        
+        <CheckBox u:FormItem.Label="解压后同名文件夹内容上移"
+                  IsChecked="{Binding SingleSameNameFolderMoveUp}"
+                  >
+        </CheckBox>
+        
 
-        <u:EnumSelector u:FormItem.Label="解压创建文件夹处理" Width="100"
+        <u:EnumSelector u:FormItem.Label="解压创建文件夹处理" 
                         DisplayDescription="True"
                         EnumType="core:UnzipCreateSeparateMode"
-                        Value="{Binding UnzipCreateSeparateMode}">
+                        Value="{Binding UnzipCreateSeparateMode}"
+                        >
         </u:EnumSelector>
 
-        <TextBox u:FormItem.Label="包含的扩展名" HorizontalAlignment="Stretch"
-                 Text="{Binding IncludeExtensions}">
+        <TextBox Classes="TextArea" u:FormItem.Label="排除搜索文件扩展名(,分割)" HorizontalAlignment="Stretch"
+                 Text="{Binding ExcludeSearchFileExtensions}">
+        </TextBox>
+        
+        <TextBox Classes="TextArea" u:FormItem.Label="解压后删除文件夹(支持正则,分割)" HorizontalAlignment="Stretch"
+                 Text="{Binding UnzippedDeleteFolderRegexs}">
+        </TextBox>
+        
+        <TextBox Classes="TextArea" u:FormItem.Label="解压后删除文件(支持正则,分割)" HorizontalAlignment="Stretch"
+                 Text="{Binding UnzippedDeleteFileRegexs}">
         </TextBox>
 
-        <TextBox u:FormItem.Label="排除的扩展名" HorizontalAlignment="Stretch"
-                 Text="{Binding ExcludeExtensions}">
-        </TextBox>
-
-        <TextBox u:FormItem.Label="排除扫描的文件夹或文件" HorizontalAlignment="Stretch"
-                 Text="{Binding SkipUnzippedSearchFileOrFolders}">
-        </TextBox>
+        <!-- <TextBox Classes="TextArea" u:FormItem.Label="排除扫描的文件夹或文件" HorizontalAlignment="Stretch" -->
+        <!--          Text="{Binding SkipUnzippedSearchFileOrFolders}"> -->
+        <!-- </TextBox> -->
 
         <TextBox u:FormItem.Label="解压至" HorizontalAlignment="Stretch"
                  Text="{Binding OutputPath}">

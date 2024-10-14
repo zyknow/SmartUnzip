@@ -10,7 +10,6 @@ public class UnzipService
 
 
     private string[] _excludeExtensions;
-    private string[] _includeExtensions;
 
     public UnzipService(UnzipOptions options)
     {
@@ -20,12 +19,11 @@ public class UnzipService
     public void SetOptions(UnzipOptions options)
     {
         _options = options;
-        _excludeExtensions = _options.ExcludeExtensions.Split(',');
-        _includeExtensions = _options.IncludeExtensions.Split(',');
+        _excludeExtensions = _options.ExcludeSearchFileExtensions.Split(',');
     }
 
 
-    IReadOnlyList<string?> Passwords =>
+    List<string?> Passwords =>
     [
         "", .._options.UnzipSortByPasswordUseCount
             ? App.Settings.Passwords.OrderByDescending(x => x.UseCount).Select(x => x.Value).ToList()
@@ -33,6 +31,7 @@ public class UnzipService
     ];
 
     public async Task<string> TestArchiveFilePasswordAsync(string archiveFilePath,
+        string? firstPassword = null,
         CancellationToken cancellationToken = default)
     {
         string? resPassword = null;
@@ -41,16 +40,29 @@ public class UnzipService
             CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cancellationTokenSource.Token);
         var token = linkedTokenSource.Token;
 
-
-        var tasks = Passwords.Select(async password =>
+        var passwords = Passwords.ToList();
+        
+        if(firstPassword != null)
+        {
+            passwords.Remove(firstPassword);
+            passwords.Insert(0, firstPassword);
+        }
+        
+        var tasks = passwords.Select(async password =>
         {
             await App.PasswordTestSemaphore.WaitAsync(token);
+            if (cancellationTokenSource.IsCancellationRequested)
+            {
+                App.PasswordTestSemaphore.Release();
+                return;
+            }
+
             try
             {
                 if (await _archiveService.TestArchivePasswordAsync(archiveFilePath, password, token))
                 {
                     resPassword = password;
-                    cancellationTokenSource.Cancel(); // 直接取消，不用等待异步取消
+                    await cancellationTokenSource.CancelAsync(); // 直接取消，不用等待异步取消
                 }
             }
             catch (OperationCanceledException)
@@ -67,9 +79,9 @@ public class UnzipService
         {
             await Task.WhenAll(tasks);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException e)
         {
-            // 捕获任务取消异常
+    
         }
 
         if (resPassword == null)
@@ -86,10 +98,12 @@ public class UnzipService
     /// </summary>
     /// <param name="archiveFilePath"></param>
     /// <param name="password"></param>
+    /// <param name="cancellationToken"></param>
     /// <returns>children archive file Paths</returns>
-    public async Task<string> UnzipAsync(string archiveFilePath, string? password = null)
+    public async Task<string> UnzipAsync(string archiveFilePath, string? password = null,
+        CancellationToken cancellationToken = default)
     {
-        await App.UnzipSemaphore.WaitAsync(); // 等待信号量许可
+        await App.UnzipSemaphore.WaitAsync(cancellationToken); // 等待信号量许可
 
         try
         {
@@ -101,9 +115,19 @@ public class UnzipService
 
             outputPath = Path.Combine(outputPath!, Path.GetFileNameWithoutExtension(archiveFilePath));
 
+            if (File.Exists(outputPath))
+            {
+                outputPath = @$"{outputPath} 1";
+                App.UnzipSemaphore.Release();
+                await _archiveService.ExtractAsync(archiveFilePath, outputPath, password,
+                    _options.DuplicateFileHandleMode, cancellationToken);
+
+                return outputPath;
+            }
+
+
             await _archiveService.ExtractAsync(archiveFilePath, outputPath, password,
-                false,
-                _options.DuplicateFileHandleMode);
+                _options.DuplicateFileHandleMode, cancellationToken);
 
             return outputPath;
         }
@@ -120,48 +144,28 @@ public class UnzipService
 
 
     // 递归搜索文件
-    public async IAsyncEnumerable<ArchiveFileSearchResult> SearchArchiveFileAsync(string dirPath)
+    public async Task<List<ArchiveFileValidResult>> SearchArchiveFileAsync(string dirPath,
+        CancellationToken cancellationToken = default)
     {
-        if (!Directory.Exists(dirPath))
-        {
-            yield break;
-        }
+        var archiveFiles = await _archiveService.SearchArchiveFilesAsync(dirPath, cancellationToken);
 
-        var files = Directory.EnumerateFiles(dirPath, "*", SearchOption.AllDirectories);
-
-        foreach (var file in files)
-        {
-            var res = await ValidFileAsync(file);
-
-            if (res.IsValid)
-            {
-                yield return res;
-            }
-        }
+        return archiveFiles;
     }
 
 
-    public async Task<ArchiveFileValidResult> ValidFileAsync(string path)
+    public async Task<ArchiveFileValidResult> ValidFileAsync(string path,
+        CancellationToken cancellationToken = default)
     {
         var extension = Path.GetExtension(path).TrimStart('.');
-        if (string.IsNullOrEmpty(extension))
-        {
-            return new();
-        }
-
-        if (_includeExtensions
-            .Any(x => x.Equals(extension, StringComparison.OrdinalIgnoreCase)))
-        {
-            return await _archiveService.TestArchiveAsync(path);
-        }
 
         if (_excludeExtensions
             .Any(x => x.Equals(extension, StringComparison.OrdinalIgnoreCase)))
         {
             return new();
         }
-
-
-        return await _archiveService.TestArchiveAsync(path);
+        else
+        {
+            return await _archiveService.TestArchiveAsync(path, cancellationToken);
+        }
     }
 }

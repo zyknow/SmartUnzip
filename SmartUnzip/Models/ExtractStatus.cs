@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace SmartUnzip.Models;
+﻿namespace SmartUnzip.Models;
 
 public enum ExtractStatus
 {
@@ -9,5 +7,6 @@ public enum ExtractStatus
     Tested,
     Extracting,
     ExtractSucceeded,
+    Finished,
     Error
 }

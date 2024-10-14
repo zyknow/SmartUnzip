@@ -16,12 +16,17 @@
 
     <Panel>
 
-        <Border Classes.IsRunning="{Binding IsRunning}" x:Name="DragBorder" Theme="{StaticResource CardBorder}"
+        <Border Classes.IsSearchingArchive="{Binding IsSearchingArchive}" Classes.IsRunning="{Binding IsRunning}"
+                x:Name="DragBorder" Theme="{StaticResource CardBorder}"
                 Margin="4"
                 Padding="4" DragDrop.AllowDrop="True">
             <Border.Styles>
                 <Style Selector="Border.IsRunning">
                     <Setter Property="BorderBrush" Value="Yellow"></Setter>
+                    <Setter Property="BorderThickness" Value="3"></Setter>
+                </Style>
+                <Style Selector="Border.IsSearchingArchive">
+                    <Setter Property="BorderBrush" Value="Cyan"></Setter>
                     <Setter Property="BorderThickness" Value="3"></Setter>
                 </Style>
             </Border.Styles>
@@ -37,6 +42,7 @@
                                 IsChecked="{Binding ShowAdvanced,Mode=TwoWay}">
                             </ToggleButton>
                             <Button IsVisible="{Binding !IsRunning}" i:Attached.Icon="mdi-play"
+                                    IsEnabled="{Binding !IsSearchingArchive}"
                                     Command="{Binding StartUnzipCommand}" />
                             <Button IsVisible="{Binding IsRunning}" Foreground="Red" i:Attached.Icon="mdi-stop"
                                     Command="{Binding StopUnzipCommand}" />
@@ -52,13 +58,17 @@
                         </Panel>
                     </StackPanel>
                 </Grid>
-                <ProgressBar
-                    Grid.Row="2"
-                    Maximum="100"
-                    Minimum="0"
-                    Value="{Binding Progress}"
-                    Foreground="{Binding ProgressColor}"
-                    ShowProgressText="True" />
+                <Grid Grid.Row="2" ColumnDefinitions="*,20,Auto">
+                    <ProgressBar
+                        Grid.Column="0"
+                        Maximum="100"
+                        Minimum="0"
+                        Value="{Binding Progress}"
+                        Foreground="{Binding ProgressColor}"
+                        ShowProgressText="True">
+                    </ProgressBar>
+                    <Label Grid.Column="2" Content="{Binding StopWatchTimeSecond,StringFormat=' {0} s'}"></Label>
+                </Grid>
                 <Grid Grid.Row="4">
                     <TreeView ItemsSource="{Binding Items}" Margin="0" Padding="0">
                         <TreeView.Styles>
@@ -96,6 +106,12 @@
                                                     Value="mdi-format-list-group"
                                                     Foreground="Magenta">
                                             </i:Icon>
+
+                                            <TextBlock VerticalAlignment="Center"
+                                                       Text="{Binding Password}"
+                                                       FontSize="14"
+                                                       TextWrapping="WrapWithOverflow">
+                                            </TextBlock>
 
                                             <TextBlock VerticalAlignment="Center"
                                                        Text="{Binding Message}"

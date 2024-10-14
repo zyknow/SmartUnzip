@@ -1,9 +1,4 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Markup.Xaml;
-using Avalonia.Platform.Storage;
-using SmartUnzip.ViewModels;
+﻿using Avalonia.Controls;
 
 namespace SmartUnzip.Views;
 

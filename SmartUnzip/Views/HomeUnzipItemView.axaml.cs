@@ -1,9 +1,6 @@
-﻿using Avalonia;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
-using SmartUnzip.Core;
 using SmartUnzip.Services;
 using SmartUnzip.ViewModels;
 
@@ -21,6 +18,7 @@ public partial class HomeUnzipItemView : UserControl
     public async void Drop(object sender, DragEventArgs e)
     {
         var vm = DataContext as UnzipItemViewModel;
+        vm.IsSearchingArchive = true;
         var items = vm!.Items;
         var options = vm.UnzipOptions;
         var unzipService = new UnzipService(options);
@@ -30,6 +28,7 @@ public partial class HomeUnzipItemView : UserControl
             if (items.Any(x => x.FilePath == filePath)) return;
 
             var item = new UnzipTreeItemViewModel(filePath);
+            item.IsVolume = isVolume;
             items.Add(item);
         }
 
@@ -54,7 +53,7 @@ public partial class HomeUnzipItemView : UserControl
 
                 if (isDir)
                 {
-                    await foreach (var archiveRes in unzipService.SearchArchiveFileAsync(path))
+                    foreach (var archiveRes in await unzipService.SearchArchiveFileAsync(path))
                     {
                         AddFileIfNotContains(archiveRes.FilePath, archiveRes.IsVolume);
                     }
@@ -69,5 +68,7 @@ public partial class HomeUnzipItemView : UserControl
                 }
             }
         }
+
+        vm.IsSearchingArchive = false;
     }
 }
